@@ -1,0 +1,1 @@
+- [API codegen and Zod](api-codegen-zod.md) — validate generated runtime helpers against the installed Zod version, not only TypeScript output.

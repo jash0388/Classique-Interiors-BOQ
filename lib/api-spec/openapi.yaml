@@ -10,6 +10,20 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Dashboard summaries
+  - name: projects
+    description: Project operations
+  - name: vendors
+    description: Vendor operations
+  - name: boqs
+    description: BOQ operations
+  - name: quotations
+    description: Quotation operations
+  - name: comparisons
+    description: Commercial comparison operations
+  - name: activity
+    description: Audit activity
 paths:
   /healthz:
     get:
@@ -24,6 +38,227 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List projects
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Project" }
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectInput" }
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectDetail" }
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectUpdate" }
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+  /vendors:
+    get:
+      operationId: listVendors
+      tags: [vendors]
+      summary: List vendors
+      responses:
+        "200":
+          description: Vendors
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Vendor" }
+    post:
+      operationId: createVendor
+      tags: [vendors]
+      summary: Create a vendor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VendorInput" }
+      responses:
+        "201":
+          description: Created vendor
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Vendor" }
+  /boqs:
+    get:
+      operationId: listBoqs
+      tags: [boqs]
+      summary: List BOQs
+      parameters:
+        - name: projectId
+          in: query
+          required: false
+          schema: { type: number }
+      responses:
+        "200":
+          description: BOQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Boq" }
+    post:
+      operationId: createBoq
+      tags: [boqs]
+      summary: Create a BOQ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BoqInput" }
+      responses:
+        "201":
+          description: Created BOQ
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Boq" }
+  /boqs/{id}/items:
+    post:
+      operationId: addBoqItem
+      tags: [boqs]
+      summary: Add a BOQ item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BoqItemInput" }
+      responses:
+        "201":
+          description: Created BOQ item
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BoqItem" }
+  /quotations:
+    get:
+      operationId: listQuotations
+      tags: [quotations]
+      summary: List quotations
+      responses:
+        "200":
+          description: Quotations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Quotation" }
+    post:
+      operationId: createQuotation
+      tags: [quotations]
+      summary: Record a quotation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuotationInput" }
+      responses:
+        "201":
+          description: Created quotation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Quotation" }
+  /comparisons:
+    get:
+      operationId: listComparisons
+      tags: [comparisons]
+      summary: List commercial comparisons
+      responses:
+        "200":
+          description: Comparisons
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Comparison" }
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: List recent activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Activity" }
 components:
   schemas:
     HealthStatus:
@@ -33,4 +268,223 @@ components:
           type: string
       required:
         - status
+    Project:
+      type: object
+      required: [id, code, name, client, location, status, value, cost, margin, manager, updatedAt, isDemo]
+      properties:
+        id: { type: number }
+        code: { type: string }
+        name: { type: string }
+        client: { type: string }
+        location: { type: string }
+        projectType: { type: string }
+        status: { type: string }
+        value: { type: number }
+        cost: { type: number }
+        margin: { type: number }
+        manager: { type: string }
+        updatedAt: { type: string }
+        isDemo: { type: boolean }
+    ProjectInput:
+      type: object
+      required: [name, client, location, status]
+      properties:
+        name: { type: string }
+        client: { type: string }
+        location: { type: string }
+        projectType: { type: string }
+        status: { type: string }
+        manager: { type: string }
+        value: { type: number }
+        notes: { type: string }
+    ProjectUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        client: { type: string }
+        location: { type: string }
+        status: { type: string }
+        manager: { type: string }
+        value: { type: number }
+        notes: { type: string }
+    ProjectDetail:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          required: [boqs, quotations, activity]
+          properties:
+            boqs:
+              type: array
+              items: { $ref: "#/components/schemas/Boq" }
+            quotations:
+              type: array
+              items: { $ref: "#/components/schemas/Quotation" }
+            activity:
+              type: array
+              items: { $ref: "#/components/schemas/Activity" }
+    Vendor:
+      type: object
+      required: [id, name, company, category, rating, active, isDemo]
+      properties:
+        id: { type: number }
+        name: { type: string }
+        company: { type: string }
+        category: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        rating: { type: number }
+        active: { type: boolean }
+        isDemo: { type: boolean }
+    VendorInput:
+      type: object
+      required: [name, company, category]
+      properties:
+        name: { type: string }
+        company: { type: string }
+        category: { type: string }
+        phone: { type: string }
+        email: { type: string }
+    Boq:
+      type: object
+      required: [id, projectId, projectName, version, status, itemCount, total]
+      properties:
+        id: { type: number }
+        projectId: { type: number }
+        projectName: { type: string }
+        version: { type: string }
+        status: { type: string }
+        itemCount: { type: number }
+        total: { type: number }
+        updatedAt: { type: string }
+    BoqInput:
+      type: object
+      required: [projectId]
+      properties:
+        projectId: { type: number }
+        notes: { type: string }
+    BoqItem:
+      type: object
+      required: [id, boqId, code, description, category, quantity, unit, materialRate, labourRate, totalRate, amount]
+      properties:
+        id: { type: number }
+        boqId: { type: number }
+        code: { type: string }
+        description: { type: string }
+        specification: { type: string }
+        category: { type: string }
+        quantity: { type: number }
+        unit: { type: string }
+        materialRate: { type: number }
+        labourRate: { type: number }
+        totalRate: { type: number }
+        amount: { type: number }
+        vendor: { type: string }
+        remarks: { type: string }
+    BoqItemInput:
+      type: object
+      required: [code, description, quantity, unit, materialRate, labourRate]
+      properties:
+        code: { type: string }
+        description: { type: string }
+        specification: { type: string }
+        category: { type: string }
+        quantity: { type: number }
+        unit: { type: string }
+        materialRate: { type: number }
+        labourRate: { type: number }
+        vendor: { type: string }
+        remarks: { type: string }
+    Quotation:
+      type: object
+      required: [id, vendor, project, number, date, total, validity, status, isDemo]
+      properties:
+        id: { type: number }
+        vendor: { type: string }
+        project: { type: string }
+        number: { type: string }
+        date: { type: string }
+        total: { type: number }
+        validity: { type: string }
+        status: { type: string }
+        leadTime: { type: string }
+        isDemo: { type: boolean }
+    QuotationInput:
+      type: object
+      required: [vendor, project, number, total]
+      properties:
+        vendor: { type: string }
+        project: { type: string }
+        number: { type: string }
+        total: { type: number }
+        validity: { type: string }
+        leadTime: { type: string }
+    Comparison:
+      type: object
+      required: [id, project, boq, status, vendors, lowest, updatedAt]
+      properties:
+        id: { type: number }
+        project: { type: string }
+        boq: { type: string }
+        status: { type: string }
+        vendors: { type: number }
+        lowest: { type: number }
+        updatedAt: { type: string }
+    Activity:
+      type: object
+      required: [id, actor, action, target, time, tone]
+      properties:
+        id: { type: number }
+        actor: { type: string }
+        action: { type: string }
+        target: { type: string }
+        time: { type: string }
+        tone: { type: string }
+    Dashboard:
+      type: object
+      required: [metrics, pipeline, recentProjects, pendingActions, activity]
+      properties:
+        metrics:
+          type: object
+          required: [totalProjects, activeProjects, pendingBoqs, pendingQuotations, pendingApprovals, activePos, siteVisits, executionProjects, variations, estimatedCost, projectValue, expectedMargin, actualCost, actualMargin]
+          properties:
+            totalProjects: { type: number }
+            activeProjects: { type: number }
+            pendingBoqs: { type: number }
+            pendingQuotations: { type: number }
+            pendingApprovals: { type: number }
+            activePos: { type: number }
+            siteVisits: { type: number }
+            executionProjects: { type: number }
+            variations: { type: number }
+            estimatedCost: { type: number }
+            projectValue: { type: number }
+            expectedMargin: { type: number }
+            actualCost: { type: number }
+            actualMargin: { type: number }
+        pipeline:
+          type: array
+          items:
+            type: object
+            required: [status, count, value]
+            properties:
+              status: { type: string }
+              count: { type: number }
+              value: { type: number }
+        recentProjects:
+          type: array
+          items: { $ref: "#/components/schemas/Project" }
+        pendingActions:
+          type: array
+          items:
+            type: object
+            required: [id, title, project, due, priority]
+            properties:
+              id: { type: number }
+              title: { type: string }
+              project: { type: string }
+              due: { type: string }
+              priority: { type: string }
+        activity:
+          type: array
+          items: { $ref: "#/components/schemas/Activity" }
 

@@ -1,0 +1,1476 @@
+Build a complete, production-quality internal web application for **Classique Interiors** based on the company's BOQ workflow.
+
+This is an actual functional business application, NOT a UI mockup.
+
+## 1. PURPOSE
+
+The system should digitally manage the complete BOQ and project-costing workflow:
+
+**Client Enquiry / RFQ → Drawings / Scope → Site Visit → Scope Understanding → Quantity Take-Off → BOQ Preparation → Vendor RFQ → Quotation Collection → Technical Comparison → Commercial Comparison → Negotiation → Final Rate Confirmation → Rate Analysis → Internal Cost BOQ → Internal Review → Management Approval → Client Proposal / BOQ → Client Review → PO / LOI → Project Budget Lock → Procurement / Site Execution / Subcontract → Actual vs BOQ → Variation → Measurement Sheet → RA Billing / Final Billing → Project Closure → Final Cost & Margin Review**
+
+The application should make this process trackable, structured and searchable.
+
+---
+
+# 2. USERS & ROLES
+
+Create role-based access:
+
+### Admin
+
+* Full access
+* Manage users
+* Manage projects
+* Manage BOQs
+* Manage vendors
+* Manage workflow
+* View all financial information
+* Approve/reject where permitted
+
+### Estimator / BOQ Team
+
+* Create BOQs
+* Quantity take-off
+* Material BOQ
+* Labour BOQ
+* Rate analysis
+* Vendor RFQs
+* Quotation comparison
+
+### Procurement
+
+* Vendor management
+* Send RFQs
+* Record quotations
+* Compare vendor rates
+* Negotiation tracking
+* Purchase order information
+
+### Site Team / Intern
+
+* View assigned projects
+* View scope
+* Perform site surveys
+* Enter measurements
+* Upload photos
+* Enter actual quantities
+* Update execution status
+* Record site observations
+
+### Management
+
+* View dashboards
+* Review BOQs
+* Approve/reject
+* View project cost
+* View margins
+* View variations
+* View final reports
+
+Do not allow lower-level users to access information they should not see.
+
+---
+
+# 3. MAIN DASHBOARD
+
+Create a professional dashboard showing:
+
+* Total Projects
+* Active Projects
+* Pending BOQs
+* Pending Quotations
+* Pending Approvals
+* Active POs
+* Site Visits
+* Projects Under Execution
+* Projects with Variations
+* Total Estimated Cost
+* Total Project Value
+* Expected Margin
+* Actual Cost
+* Actual Margin
+
+Also show:
+
+### Recent Projects
+
+### Pending Actions
+
+Examples:
+
+* BOQ awaiting quotation
+* Quotation awaiting comparison
+* BOQ awaiting management approval
+* Client revision required
+* PO received
+* Site measurement pending
+* Vendor follow-up pending
+
+### Project Status
+
+Use clear statuses:
+
+* Enquiry
+* Site Survey
+* BOQ Preparation
+* Vendor RFQ
+* Quotation Comparison
+* Internal Review
+* Management Approval
+* Client Review
+* Approved
+* PO Received
+* Execution
+* Billing
+* Closed
+
+---
+
+# 4. PROJECT CREATION
+
+Create a project with:
+
+* Project Name
+* Client Name
+* Client Contact
+* Project Code
+* Site Location
+* City
+* Project Type
+* Assigned Manager
+* Estimator
+* Procurement Person
+* Site Team
+* Start Date
+* Expected Completion Date
+* Status
+* Notes
+
+Allow uploading:
+
+* RFQ
+* Drawings
+* Scope documents
+* Photos
+* Other documents
+
+---
+
+# 5. CLIENT ENQUIRY / RFQ
+
+Create an enquiry module.
+
+Fields:
+
+* Enquiry Number
+* Client
+* Date Received
+* RFQ Reference
+* Scope Description
+* Deadline
+* Contact Person
+* Contact Number
+* Email
+* Attachments
+* Assigned Employee
+* Status
+
+Statuses:
+
+* New
+* Under Review
+* Site Visit Required
+* BOQ Preparation
+* Submitted
+* Won
+* Lost
+
+---
+
+# 6. DRAWINGS / SCOPE
+
+Allow users to upload and manage:
+
+* Architectural drawings
+* MEP drawings
+* Interior drawings
+* Specifications
+* Scope documents
+* Images
+
+Each document should have:
+
+* Name
+* Type
+* Version
+* Upload date
+* Uploaded by
+* Notes
+
+Support document versioning.
+
+---
+
+# 7. SITE VISIT & SURVEY
+
+Create a dedicated site survey module.
+
+Fields:
+
+* Site
+* Date
+* Visitor
+* Contact Person
+* Scope
+* Measurements
+* Observations
+* Constraints
+* Access restrictions
+* Working hours
+* Existing condition
+* Photos
+* Videos
+* Notes
+
+Allow custom checklists.
+
+Example:
+
+### Site Checklist
+
+* [ ] Verify dimensions
+* [ ] Check existing condition
+* [ ] Check access
+* [ ] Check material requirements
+* [ ] Check working restrictions
+* [ ] Take photographs
+* [ ] Record measurements
+* [ ] Confirm scope with client
+
+Allow every checklist item to contain:
+
+* Answer
+* Notes
+* Photos
+* Measurements
+* Status
+
+---
+
+# 8. QUANTITY TAKE-OFF
+
+Create a quantity take-off module.
+
+Each item should contain:
+
+* Item Code
+* Description
+* Category
+* Location
+* Length
+* Width
+* Height
+* Quantity
+* Unit
+* Calculation
+* Notes
+* Drawing Reference
+
+Categories:
+
+* Civil
+* MEP
+* Interiors
+
+Units:
+
+* Nos
+* Sqft
+* Sqm
+* Rft
+* Kg
+* Ltr
+* Set
+* Lot
+* Other
+
+Automatically calculate quantities where possible.
+
+---
+
+# 9. BOQ MODULE
+
+Create a professional BOQ builder.
+
+Columns:
+
+* Item No.
+* Item Code
+* Description
+* Specification
+* Category
+* Quantity
+* Unit
+* Material Rate
+* Labour Rate
+* Subcontract Rate
+* Total Rate
+* Amount
+* Vendor
+* Remarks
+
+Formula:
+
+**Amount = Quantity × Rate**
+
+Allow:
+
+* Add item
+* Edit item
+* Delete item
+* Duplicate item
+* Import Excel
+* Export Excel
+* Generate PDF
+
+BOQs must be version controlled.
+
+Example:
+
+BOQ V1
+BOQ V2
+BOQ V3
+
+Track what changed between versions.
+
+---
+
+# 10. MATERIAL BOQ
+
+Separate material BOQ.
+
+Fields:
+
+* Material
+* Specification
+* Make
+* Model
+* Quantity
+* Unit
+* Rate
+* Amount
+* Preferred Vendor
+* Alternative Vendor
+* Remarks
+
+---
+
+# 11. LABOUR BOQ
+
+Fields:
+
+* Labour Category
+* Description
+* Quantity
+* Unit
+* Rate
+* Amount
+* Productivity
+* Remarks
+
+---
+
+# 12. VENDOR / OEM RFQ
+
+Create vendor RFQ management.
+
+Vendor fields:
+
+* Vendor Name
+* Company
+* Contact Person
+* Phone
+* Email
+* Category
+* GST
+* Address
+* Rating
+* Previous Projects
+* Notes
+
+Create RFQ:
+
+* Project
+* BOQ
+* Vendor
+* RFQ Date
+* Submission Deadline
+* Items Requested
+* Attachments
+* Status
+
+Statuses:
+
+* Draft
+* Sent
+* Viewed
+* Quotation Received
+* Under Comparison
+* Negotiation
+* Selected
+* Rejected
+
+---
+
+# 13. QUOTATION COLLECTION
+
+Allow uploading vendor quotations in:
+
+* PDF
+* Excel
+* Image
+* Other documents
+
+Record:
+
+* Vendor
+* Quotation Number
+* Date
+* Validity
+* Total Amount
+* Taxes
+* Delivery
+* Payment Terms
+* Lead Time
+* Notes
+
+---
+
+# 14. TECHNICAL COMPARISON
+
+Create a technical comparison table.
+
+Compare vendors based on:
+
+* Specification
+* Make
+* Model
+* Material
+* Warranty
+* Delivery
+* Compliance
+* Technical deviations
+
+Show:
+
+🟢 Compliant
+🟡 Deviation
+🔴 Non-compliant
+
+Allow technical remarks.
+
+---
+
+# 15. COMMERCIAL COMPARISON
+
+Create a commercial comparison table.
+
+Example:
+
+| Item | Vendor A | Vendor B | Vendor C | Lowest |
+| ---- | -------- | -------- | -------- | ------ |
+
+Compare:
+
+* Unit rate
+* Quantity
+* Total amount
+* GST
+* Freight
+* Delivery
+* Payment terms
+* Final landed cost
+
+Automatically identify the lowest valid quotation.
+
+DO NOT automatically select the lowest vendor. The user must make the final selection.
+
+---
+
+# 16. NEGOTIATION
+
+Create negotiation tracking.
+
+Fields:
+
+* Vendor
+* Original Quotation
+* Negotiated Rate
+* Revised Quotation
+* Savings
+* Negotiation Date
+* Negotiated By
+* Remarks
+
+Automatically calculate:
+
+**Savings = Original Amount - Negotiated Amount**
+
+---
+
+# 17. FINAL RATE CONFIRMATION
+
+After quotation comparison and negotiation, allow the authorized user to confirm the final rate.
+
+Store:
+
+* Final Vendor
+* Final Rate
+* Approved Quantity
+* Final Amount
+* Approval Date
+* Approved By
+
+Lock the approved rate from accidental modification.
+
+---
+
+# 18. RATE ANALYSIS
+
+Create automatic rate analysis.
+
+Break cost into:
+
+### Material Cost
+
+### Labour Cost
+
+### Subcontract Cost
+
+### Freight / Logistics
+
+### Wastage
+
+### Site Overheads
+
+### Additional Costs
+
+Calculate:
+
+**Total Project Cost**
+
+Then add:
+
+* Overhead
+* Risk
+* Contingency
+* Target Profit
+* Target Margin
+
+Show:
+
+* Cost
+* Selling Price
+* Profit
+* Profit %
+* Margin %
+
+Make every calculation transparent.
+
+---
+
+# 19. INTERNAL COST BOQ
+
+Generate an internal cost BOQ from the rate analysis.
+
+Show:
+
+* Item
+* Quantity
+* Cost Rate
+* Cost Amount
+* Selling Rate
+* Selling Amount
+* Profit
+* Margin %
+
+This should be different from the client-facing BOQ.
+
+---
+
+# 20. INTERNAL REVIEW
+
+Create an approval workflow.
+
+Reviewer can:
+
+* Approve
+* Reject
+* Request Correction
+* Add Comment
+
+Every action must be logged.
+
+Example:
+
+**Estimator → Internal Review → Correction → Resubmission → Approved**
+
+---
+
+# 21. MANAGEMENT APPROVAL
+
+Management can review:
+
+* Project value
+* Total cost
+* Margin
+* Vendor comparison
+* Risk
+* Contingency
+* BOQ
+* Attachments
+
+Buttons:
+
+**Approve**
+
+**Reject**
+
+**Send Back**
+
+Require comments when rejecting/sending back.
+
+---
+
+# 22. CLIENT PROPOSAL / BOQ
+
+Generate a professional client-facing proposal.
+
+Do NOT expose internal:
+
+* Cost rates
+* Vendor quotations
+* Profit
+* Internal comments
+* Internal margin
+
+Only show client-approved information.
+
+Allow:
+
+* PDF
+* Excel
+
+---
+
+# 23. CLIENT REVIEW
+
+Track:
+
+* Submitted Date
+* Client Response
+* Revision Required
+* Value Engineering
+* Approved Amount
+* Comments
+
+Statuses:
+
+* Submitted
+* Under Client Review
+* Revision Required
+* VE
+* Approved
+* Rejected
+
+Maintain version history.
+
+---
+
+# 24. PO / LOI
+
+After client approval:
+
+Record:
+
+* PO Number
+* LOI Number
+* PO Date
+* PO Value
+* Client
+* Project
+* Start Date
+* Completion Date
+* Attach PO
+* Payment Terms
+
+Status:
+
+**PO Received**
+
+---
+
+# 25. PROJECT BUDGET LOCK
+
+Once PO is received:
+
+Create a locked project budget.
+
+Show:
+
+* Approved BOQ
+* Approved Quantity
+* Approved Rate
+* Budget
+* Target Margin
+
+Any later change must be treated as a variation.
+
+---
+
+# 26. PROCUREMENT
+
+Track procurement:
+
+* Material
+* Quantity
+* Required Date
+* Vendor
+* Ordered Quantity
+* Delivered Quantity
+* Pending Quantity
+* Delivery Date
+* Invoice
+* Status
+
+Statuses:
+
+* Not Ordered
+* Ordered
+* Partially Delivered
+* Delivered
+
+---
+
+# 27. SITE EXECUTION
+
+Site team can update:
+
+* Work completed
+* Actual quantity
+* Labour
+* Materials consumed
+* Photos
+* Daily progress
+* Issues
+* Delays
+* Notes
+
+Create a daily site update.
+
+---
+
+# 28. SUBCONTRACT MANAGEMENT
+
+Track:
+
+* Subcontractor
+* Scope
+* PO/Work Order
+* Rate
+* Quantity
+* Amount
+* Progress
+* Bills
+* Payments
+* Remarks
+
+---
+
+# 29. ACTUAL VS BOQ
+
+This is a CORE feature.
+
+Compare:
+
+**BOQ Quantity vs Actual Quantity**
+
+and:
+
+**BOQ Cost vs Actual Cost**
+
+Example:
+
+| Item | BOQ | Actual | Variance | Cost BOQ | Actual Cost |
+| ---- | --- | ------ | -------- | -------- | ----------- |
+
+Automatically calculate variance.
+
+Use:
+
+🟢 Within BOQ
+🟡 Minor Variance
+🔴 Major Variance
+
+---
+
+# 30. VARIATION / VO
+
+When actual quantity exceeds approved BOQ:
+
+Create a Variation Order.
+
+Fields:
+
+* Item
+* Original Quantity
+* Actual Quantity
+* Difference
+* Rate
+* Variation Amount
+* Reason
+* Supporting Photos
+* Client Approval
+* Approval Date
+
+Do NOT include the variation in the final budget until approved.
+
+---
+
+# 31. MEASUREMENT SHEET
+
+Create a digital measurement sheet.
+
+Fields:
+
+* Item
+* Location
+* Description
+* Length
+* Width
+* Height
+* Quantity
+* Unit
+* Calculation
+* Date
+* Measured By
+* Verified By
+* Photos
+
+Allow PDF/Excel export.
+
+---
+
+# 32. RA BILLING / FINAL BILLING
+
+Track:
+
+* Bill Number
+* Period
+* Work Completed
+* Gross Amount
+* Retention
+* GST
+* Deductions
+* Net Amount
+* Approval Status
+* Payment Status
+
+Statuses:
+
+* Draft
+* Submitted
+* Under Review
+* Approved
+* Paid
+
+---
+
+# 33. PROJECT CLOSURE
+
+Before closure, checklist:
+
+* [ ] All work completed
+* [ ] Final measurements completed
+* [ ] Final bill submitted
+* [ ] Client approval received
+* [ ] Materials reconciled
+* [ ] Subcontractor bills closed
+* [ ] Variations closed
+* [ ] Documents archived
+
+---
+
+# 34. FINAL COST & MARGIN REVIEW
+
+Show:
+
+### Budget
+
+### Actual Material Cost
+
+### Actual Labour Cost
+
+### Actual Subcontract Cost
+
+### Freight
+
+### Wastage
+
+### Site Overheads
+
+### Total Actual Cost
+
+### Revenue
+
+### Gross Profit
+
+### Gross Margin %
+
+Compare:
+
+**Original Target Margin vs Actual Margin**
+
+Highlight whether the project:
+
+🟢 Improved
+🟡 Stayed near target
+🔴 Lost margin
+
+---
+
+# 35. DOCUMENT MANAGEMENT
+
+Every project should have a document center.
+
+Folders/categories:
+
+* RFQ
+* Drawings
+* BOQ
+* Vendor Quotations
+* Comparatives
+* Approvals
+* PO
+* Procurement
+* Site Photos
+* Measurement Sheets
+* Bills
+* Client Documents
+* Closure Documents
+
+Allow upload/download/preview.
+
+Maintain version history.
+
+---
+
+# 36. ACTIVITY / AUDIT LOG
+
+Track every important action.
+
+Example:
+
+**Jashwanth created BOQ V1**
+
+**Ajay uploaded Vendor A quotation**
+
+**Saurabh approved quotation**
+
+**Manager rejected BOQ V2**
+
+Store:
+
+* User
+* Action
+* Date/time
+* Project
+* Previous value
+* New value
+
+Users must not be able to silently modify approval history.
+
+---
+
+# 37. NOTIFICATIONS
+
+Create notifications for:
+
+* New RFQ
+* Site visit assigned
+* Quotation received
+* Comparison ready
+* Approval pending
+* Revision required
+* PO received
+* Delivery delayed
+* Variation created
+* Bill submitted
+* Bill approved
+
+---
+
+# 38. SEARCH
+
+Global search across:
+
+* Projects
+* BOQs
+* Vendors
+* Quotations
+* POs
+* Site visits
+* Bills
+
+Filters:
+
+* Project
+* Client
+* Location
+* Status
+* Date
+* Vendor
+* Assigned person
+
+---
+
+# 39. REPORTS
+
+Create reports:
+
+### Project Cost Report
+
+### BOQ Report
+
+### Vendor Comparison
+
+### Rate Analysis
+
+### Site Progress
+
+### Actual vs BOQ
+
+### Variation Report
+
+### Procurement Report
+
+### Billing Report
+
+### Profit/Margin Report
+
+Allow PDF and Excel export.
+
+---
+
+# 40. UI DESIGN
+
+Make it look like a serious internal enterprise application.
+
+Use:
+
+* Clean light theme
+* Professional white/neutral background
+* Blue/green accent colors
+* Clear cards
+* Tables
+* Status badges
+* Charts
+* Side navigation
+* Responsive design
+
+Main navigation:
+
+Dashboard
+Projects
+Enquiries
+Site Visits
+BOQs
+Quantity Take-Off
+Vendors
+RFQs
+Quotations
+Comparatives
+Rate Analysis
+Approvals
+POs
+Procurement
+Execution
+Actual vs BOQ
+Variations
+Measurements
+Billing
+Reports
+Documents
+Users
+
+---
+
+# 41. PROJECT DETAIL PAGE
+
+Every project should have tabs:
+
+**Overview**
+
+**Scope**
+
+**Site Visits**
+
+**BOQ**
+
+**Quantity Take-Off**
+
+**Vendors**
+
+**Quotations**
+
+**Comparatives**
+
+**Rate Analysis**
+
+**Approvals**
+
+**PO**
+
+**Procurement**
+
+**Execution**
+
+**Actual vs BOQ**
+
+**Variations**
+
+**Measurements**
+
+**Billing**
+
+**Documents**
+
+**Activity**
+
+---
+
+# 42. DATABASE
+
+Use a proper relational data model.
+
+Core entities:
+
+* users
+* roles
+* clients
+* projects
+* enquiries
+* documents
+* site_visits
+* site_measurements
+* boq_versions
+* boq_items
+* vendors
+* rfqs
+* quotations
+* quotation_items
+* technical_comparisons
+* commercial_comparisons
+* negotiations
+* rate_analyses
+* approvals
+* purchase_orders
+* procurement_items
+* execution_updates
+* subcontractors
+* variations
+* measurement_sheets
+* bills
+* payments
+* notifications
+* activity_logs
+
+Use proper foreign keys and relationships.
+
+---
+
+# 43. SECURITY
+
+Implement:
+
+* Authentication
+* Role-based authorization
+* Protected routes
+* Server-side validation
+* Input validation
+* Secure file uploads
+* Audit logs
+* No exposure of internal cost/margin data to client-facing users
+
+Never rely only on frontend permissions.
+
+---
+
+# 44. IMPORTANT CALCULATIONS
+
+Implement accurate calculations.
+
+### BOQ Amount
+
+Quantity × Rate
+
+### Total Cost
+
+Material + Labour + Subcontract + Freight + Wastage + Site Overheads + Additional Costs
+
+### Profit
+
+Selling Price - Actual Cost
+
+### Margin %
+
+Profit / Selling Price × 100
+
+### Variance
+
+Actual Quantity - BOQ Quantity
+
+### Cost Variance
+
+Actual Cost - Budget Cost
+
+### Vendor Savings
+
+Original Quotation - Negotiated Quotation
+
+All calculations should update automatically.
+
+---
+
+# 45. EXCEL IMPORT
+
+Allow importing existing BOQs from Excel.
+
+Map columns such as:
+
+* Item No
+* Description
+* Specification
+* Quantity
+* Unit
+* Rate
+* Amount
+
+Validate the imported data before saving.
+
+Show errors instead of silently importing bad data.
+
+---
+
+# 46. EXCEL EXPORT
+
+Every major table should support Excel export.
+
+Exports should contain:
+
+* Project information
+* BOQ
+* Quantities
+* Rates
+* Vendors
+* Quotations
+* Comparatives
+* Actuals
+* Variations
+* Billing
+
+---
+
+# 47. PDF REPORTS
+
+Generate professional PDFs with:
+
+* Company name: Classique Interiors
+* Project
+* Client
+* BOQ number
+* Date
+* Prepared by
+* Tables
+* Totals
+* Approval information
+
+Do not expose internal information in client-facing PDFs.
+
+---
+
+# 48. DEMO DATA
+
+Create realistic demo data so the application can be tested immediately.
+
+Create:
+
+### Project 1
+
+Client: IBM India
+Location: Hyderabad
+Status: Execution
+
+### Project 2
+
+Client: Amazon Development Centre
+Location: Hyderabad
+Status: BOQ Preparation
+
+Create demo:
+
+* BOQs
+* Vendors
+* Quotations
+* Comparatives
+* Site visits
+* Measurements
+* Procurement
+* Execution
+* Variations
+* Bills
+
+Use realistic values, but clearly mark demo records as DEMO.
+
+---
+
+# 49. IMPORTANT WORKFLOW RULE
+
+The application must NOT allow users to randomly jump through the process without tracking the workflow.
+
+For example:
+
+Enquiry
+↓
+Scope
+↓
+Site Visit
+↓
+Quantity Take-Off
+↓
+BOQ
+↓
+Vendor RFQ
+↓
+Quotation
+↓
+Comparison
+↓
+Negotiation
+↓
+Rate Confirmation
+↓
+Rate Analysis
+↓
+Internal Review
+↓
+Management Approval
+↓
+Client Proposal
+↓
+Client Approval
+↓
+PO
+↓
+Budget Lock
+↓
+Execution
+↓
+Actual vs BOQ
+↓
+Variation if required
+↓
+Measurement
+↓
+Billing
+↓
+Closure
+
+However, authorized managers/admins may override workflow when necessary, and every override must be logged.
+
+---
+
+# 50. MVP PRIORITY
+
+Do NOT try to perfect every feature before the application works.
+
+Build in this order:
+
+### Phase 1
+
+Authentication
+Dashboard
+Projects
+BOQ
+BOQ Items
+Vendors
+Quotations
+Commercial Comparison
+
+### Phase 2
+
+Site Visits
+Quantity Take-Off
+Rate Analysis
+Approvals
+PO
+
+### Phase 3
+
+Procurement
+Execution
+Actual vs BOQ
+Variations
+Measurements
+
+### Phase 4
+
+Billing
+Reports
+Documents
+Notifications
+Audit Logs
+
+---
+
+# 51. VERY IMPORTANT DEVELOPMENT RULES
+
+* Build actual functionality, not static screens.
+* Do not use fake buttons.
+* Do not hardcode calculations.
+* Use reusable components.
+* Use proper database relationships.
+* Add loading states.
+* Add empty states.
+* Add error handling.
+* Add form validation.
+* Add confirmation dialogs for destructive actions.
+* Make tables searchable and filterable.
+* Make the application responsive.
+* Keep the code modular.
+* Keep business logic separate from UI.
+* Use environment variables for secrets.
+* Never expose API keys.
+* Test all major workflows.
+
+---
+
+# 52. FINAL GOAL
+
+The finished application should allow Classique Interiors to manage a project from:
+
+**RFQ → Site Survey → BOQ → Vendor Quotations → Comparison → Rate Analysis → Approval → Client Proposal → PO → Procurement → Execution → Actual vs BOQ → Variation → Billing → Closure → Final Margin**
+
+The software should make it possible for a manager to open one project and understand:
+
+**What was requested?
+What was quoted?
+What was approved?
+What was purchased?
+What was executed?
+What actually cost money?
+Are there variations?
+How much has been billed?
+What is the final profit/margin?**
+
+Build the application as a real internal enterprise tool with a clean UI, strong data structure and functional workflows.

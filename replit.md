@@ -1,6 +1,6 @@
-# [Project name]
+# Classique Interiors
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An internal project-controls workspace for managing interior BOQs, vendor quotations, approvals, and commercial decisions.
 
 ## Run & Operate
 
@@ -21,16 +21,17 @@ _Replace the heading above with the project's name, and this line with one sente
 - Build: esbuild (CJS bundle)
 
 ## Where things live
-
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/classique-interiors` — React/Vite application with dashboard, projects, BOQs, vendors, quotations, and commercial comparisons.
+- `artifacts/api-server/src/routes/classique.ts` — current API routes and DEMO seed data for the first workflow slice.
+- `lib/api-spec/openapi.yaml` — source-of-truth contract for generated API hooks and validation.
 
 ## Architecture decisions
-
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first release is organized around the BOQ workflow and exposes dashboard summaries as a dedicated read endpoint.
+- Client-facing navigation deliberately separates project value and cost-control surfaces so future role permissions can be applied without restructuring pages.
+- DEMO records are clearly marked by the API and are used to make the workflow testable on first launch.
 
 ## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+Classique Interiors gives estimators, procurement, site teams, and management a shared view of project stages, BOQ versions, vendor pricing, pending actions, and commercial comparisons.
 
 ## User preferences
 

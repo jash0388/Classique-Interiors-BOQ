@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Classique Interiors"
+description = "A production-ready internal BOQ and project-costing application for Classique Interiors, covering projects, estimates, vendors, quotations, comparisons, approvals, procurement, execution, billing, and margin review."
+version = "1.0.0"
+id = "artifacts/classique-interiors"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21501
+
+[services.development]
+run = "pnpm --filter @workspace/classique-interiors run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/classique-interiors", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/classique-interiors/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21501"
+BASE_PATH = "/"
