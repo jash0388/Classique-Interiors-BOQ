@@ -1,4 +1,4 @@
-import { mkdir, writeFile, stat } from "node:fs/promises";
+import { mkdir, writeFile, stat, unlink } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -73,8 +73,36 @@ export async function putFile(file: File): Promise<StoredFile> {
 export function storedPath(url: string): string | null {
   const prefix = "/api/files/";
   if (!url.startsWith(prefix)) return null;
-  const name = path.basename(url.slice(prefix.length));
+  const name = url.slice(prefix.length);
+  if (!name || name === "." || name === ".." || name.includes("/") || name.includes("\\")) return null;
   return path.join(UPLOAD_DIR, name);
+}
+
+/** Remove only files stored by this app. Unsupported/external URLs fail closed. */
+export async function deleteStoredFile(url: string): Promise<void> {
+  const localPath = storedPath(url);
+  if (localPath) {
+    try {
+      await unlink(localPath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+    return;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("Unsupported attachment URL; keeping the BOQ in Trash for retry.");
+  }
+
+  if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(".private.blob.vercel-storage.com")) {
+    throw new Error("Attachment is outside the app's private storage; keeping the BOQ in Trash.");
+  }
+
+  const { del } = await import("@vercel/blob");
+  await del(url);
 }
 
 export async function fileBytes(url: string): Promise<{ body: Buffer; filename: string } | null> {

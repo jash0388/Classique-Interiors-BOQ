@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
     onBeforeGenerateToken: async (_pathname, clientPayload) => {
       let authorized = Boolean(await getSession());
       if (!authorized && clientPayload) {
-        const boq = await db.bOQ.findUnique({ where: { visitToken: clientPayload }, select: { id: true } });
-        authorized = Boolean(boq);
+        const boq = await db.bOQ.findUnique({ where: { visitToken: clientPayload }, select: { deletedAt: true } });
+        authorized = Boolean(boq && !boq.deletedAt);
       }
       if (!authorized) throw new Error("Not authorized");
       return {

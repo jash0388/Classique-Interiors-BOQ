@@ -13,6 +13,7 @@ import { setHold, removeVendorInquiry } from "../actions";
 import AssignCard from "./AssignCard";
 import { AddVendorForm, QuoteForm } from "./VendorForms";
 import QuotationPanel from "./QuotationPanel";
+import DeleteBoqButton from "../DeleteBoqButton";
 
 export default async function BoqDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -29,7 +30,7 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
       createdBy: true,
     },
   });
-  if (!boq) notFound();
+  if (!boq || boq.deletedAt) notFound();
   if (user.role === "FIELD" && boq.assignedToId !== user.uid) notFound();
 
   const canManage = user.role === "OWNER" || user.role === "MANAGER";
@@ -63,6 +64,7 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
         <Link href={user.role === "FIELD" ? "/dashboard" : "/boqs"} className="text-sm text-stone-500 hover:text-stone-700">
           ← Back
         </Link>
+        {user.role === "OWNER" ? <DeleteBoqButton id={boq.id} number={boq.number} /> : null}
         {canManage && boq.status !== "ON_HOLD" && boq.status !== "COMPLETED" ? (
           <form action={setHold}>
             <input type="hidden" name="boqId" value={boq.id} />

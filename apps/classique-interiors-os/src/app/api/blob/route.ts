@@ -15,13 +15,15 @@ export async function GET(req: NextRequest) {
   const [siteVisitFile, quoteFile] = await Promise.all([
     db.siteVisitFile.findFirst({
       where: { url },
-      select: { id: true, siteVisit: { select: { boq: { select: { visitToken: true } } } } },
+      select: { id: true, siteVisit: { select: { boq: { select: { visitToken: true, deletedAt: true } } } } },
     }),
-    db.vendorQuote.findFirst({ where: { fileUrl: url }, select: { id: true } }),
+    db.vendorQuote.findFirst({ where: { fileUrl: url }, select: { id: true, inquiry: { select: { boq: { select: { deletedAt: true } } } } } }),
   ]);
   const token = req.nextUrl.searchParams.get("token");
-  const allowedForVisitLink = Boolean(token && siteVisitFile?.siteVisit.boq.visitToken === token);
-  const authorized = Boolean((session && (siteVisitFile || quoteFile)) || allowedForVisitLink);
+  const visitBelongsToActiveBoq = Boolean(siteVisitFile && !siteVisitFile.siteVisit.boq.deletedAt);
+  const quoteBelongsToActiveBoq = Boolean(quoteFile && !quoteFile.inquiry.boq.deletedAt);
+  const allowedForVisitLink = Boolean(token && siteVisitFile?.siteVisit.boq.visitToken === token && visitBelongsToActiveBoq);
+  const authorized = Boolean((session && (visitBelongsToActiveBoq || quoteBelongsToActiveBoq)) || allowedForVisitLink);
   if (!authorized) return NextResponse.json({ error: "Not authorized" }, { status: 401 });
 
   const result = await get(url, { access: "private" });

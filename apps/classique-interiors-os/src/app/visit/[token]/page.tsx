@@ -13,7 +13,7 @@ export default async function VisitPage({ params }: { params: Promise<{ token: s
     include: { assignedTo: true, siteVisit: { include: { files: true } } },
   });
 
-  if (!boq) {
+  if (!boq || boq.deletedAt) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-stone-100 px-4">
         <div className="max-w-sm text-center">

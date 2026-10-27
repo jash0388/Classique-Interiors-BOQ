@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     where: { id },
     include: { items: { orderBy: { srNo: "asc" } }, siteVisit: { include: { files: true } } },
   });
-  if (!boq) return NextResponse.json({ error: "BOQ not found" }, { status: 404 });
+  if (!boq || boq.deletedAt) return NextResponse.json({ error: "BOQ not found" }, { status: 404 });
 
   const inquiry = inquiryId
     ? await db.vendorInquiry.findUnique({ where: { id: inquiryId } })

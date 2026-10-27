@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
 
   let authorized = false;
   if (visitToken && typeof visitToken === "string") {
-    const boq = await db.bOQ.findUnique({ where: { visitToken }, select: { id: true } });
-    authorized = Boolean(boq);
+    const boq = await db.bOQ.findUnique({ where: { visitToken }, select: { deletedAt: true } });
+    authorized = Boolean(boq && !boq.deletedAt);
   }
   if (!authorized) authorized = Boolean(await getSession());
   if (!authorized) {

@@ -16,7 +16,10 @@ export default async function BoqsPage({
   const user = await requireUser();
   const { status } = await searchParams;
 
-  const where = user.role === "FIELD" ? { assignedToId: user.uid } : status ? { status } : {};
+  const where = {
+    deletedAt: null,
+    ...(user.role === "FIELD" ? { assignedToId: user.uid } : status ? { status } : {}),
+  };
   const boqs = await db.bOQ.findMany({
     where,
     orderBy: { createdAt: "desc" },

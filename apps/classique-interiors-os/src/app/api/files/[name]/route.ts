@@ -15,8 +15,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ name: strin
   if (!authorized) {
     const token = req.nextUrl.searchParams.get("token");
     if (token) {
-      const boq = await db.bOQ.findUnique({ where: { visitToken: token }, select: { id: true } });
-      authorized = Boolean(boq);
+      const boq = await db.bOQ.findUnique({ where: { visitToken: token }, select: { deletedAt: true } });
+      authorized = Boolean(boq && !boq.deletedAt);
     }
   }
   if (!authorized) {

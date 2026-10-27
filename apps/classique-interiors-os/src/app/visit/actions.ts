@@ -33,8 +33,8 @@ function parseFiles(raw: FormDataEntryValue | null): FileMeta[] {
 
 export async function submitVisit(_prev: VisitState, formData: FormData): Promise<VisitState> {
   const token = str(formData.get("token"));
-  const boq = await db.bOQ.findUnique({ where: { visitToken: token }, select: { id: true, status: true } });
-  if (!boq) return { error: "This link is not valid anymore. Please ask your manager for a new one." };
+  const boq = await db.bOQ.findUnique({ where: { visitToken: token }, select: { id: true, status: true, deletedAt: true } });
+  if (!boq || boq.deletedAt) return { error: "This link is not valid anymore. Please ask your manager for a new one." };
 
   const session = await getSession();
   const notes = str(formData.get("notes"));

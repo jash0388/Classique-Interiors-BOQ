@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
   const { id } = await ctx.params;
   const q = await db.quotation.findUnique({ where: { id }, include: { boq: true } });
-  if (!q) return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
+  if (!q || q.boq.deletedAt) return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
 
   const items: QuotationSnapshotItem[] = JSON.parse(q.itemsSnapshotJson);
 

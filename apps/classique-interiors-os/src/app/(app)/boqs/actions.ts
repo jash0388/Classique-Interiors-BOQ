@@ -6,6 +6,7 @@ import crypto from "node:crypto";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/constants";
+import { trashCutoff } from "@/lib/boq-trash";
 
 function newToken() {
   return crypto.randomBytes(24).toString("hex");
@@ -18,6 +19,39 @@ function str(v: FormDataEntryValue | null): string {
 function num(v: FormDataEntryValue | null, def = 0): number {
   const n = parseFloat(String(v ?? ""));
   return Number.isFinite(n) ? n : def;
+}
+
+export async function trashBOQ(formData: FormData) {
+  await requireRole("OWNER");
+  const boqId = str(formData.get("boqId"));
+  if (!boqId) throw new Error("BOQ not found.");
+
+  const result = await db.bOQ.updateMany({
+    where: { id: boqId, deletedAt: null },
+    data: { deletedAt: new Date() },
+  });
+  if (!result.count) throw new Error("BOQ not found or already in Trash.");
+
+  revalidatePath("/boqs");
+  revalidatePath("/boqs/trash");
+  revalidatePath("/dashboard");
+  redirect("/boqs");
+}
+
+export async function restoreBOQ(formData: FormData) {
+  await requireRole("OWNER");
+  const boqId = str(formData.get("boqId"));
+  if (!boqId) throw new Error("BOQ not found.");
+
+  const result = await db.bOQ.updateMany({
+    where: { id: boqId, deletedAt: { gt: trashCutoff() } },
+    data: { deletedAt: null },
+  });
+  if (!result.count) throw new Error("This BOQ's 15-day recovery period has expired.");
+
+  revalidatePath("/boqs");
+  revalidatePath("/boqs/trash");
+  revalidatePath("/dashboard");
 }
 
 async function nextBoqNumber(): Promise<string> {
@@ -109,8 +143,8 @@ export async function assignBOQ(formData: FormData) {
   const assignedToId = str(formData.get("assignedToId"));
   if (!boqId || !assignedToId) throw new Error("Pick a person to assign.");
 
-  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true } });
-  if (!boq) throw new Error("BOQ not found.");
+  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true, deletedAt: true } });
+  if (!boq || boq.deletedAt) throw new Error("BOQ not found.");
 
   const resetStatuses = ["DRAFT", "ASSIGNED", "SITE_VISIT_DONE", "ON_HOLD"];
   await db.bOQ.update({
@@ -132,8 +166,8 @@ export async function setHold(formData: FormData) {
   await requireRole("OWNER", "MANAGER");
   const boqId = str(formData.get("boqId"));
   const hold = str(formData.get("hold")) === "1";
-  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true } });
-  if (!boq) throw new Error("BOQ not found.");
+  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true, deletedAt: true } });
+  if (!boq || boq.deletedAt) throw new Error("BOQ not found.");
 
   let status = boq.status;
   if (hold) status = "ON_HOLD";
@@ -151,8 +185,8 @@ export async function addVendorInquiry(formData: FormData) {
   const vendorName = str(formData.get("vendorName"));
   if (!boqId || !vendorName) throw new Error("Vendor name is required.");
 
-  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true } });
-  if (!boq) throw new Error("BOQ not found.");
+  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true, deletedAt: true } });
+  if (!boq || boq.deletedAt) throw new Error("BOQ not found.");
 
   const dueDateRaw = str(formData.get("dueDate"));
   await db.vendorInquiry.create({
@@ -180,6 +214,8 @@ export async function removeVendorInquiry(formData: FormData) {
   await requireRole("OWNER", "MANAGER");
   const inquiryId = str(formData.get("inquiryId"));
   const boqId = str(formData.get("boqId"));
+  const boq = await db.bOQ.findFirst({ where: { id: boqId, deletedAt: null }, select: { id: true } });
+  if (!boq) throw new Error("BOQ not found.");
   await db.vendorInquiry.delete({ where: { id: inquiryId } });
   revalidatePath(`/boqs/${boqId}`);
 }
@@ -226,8 +262,8 @@ export async function addVendorQuote(formData: FormData) {
   });
   await db.vendorInquiry.update({ where: { id: inquiryId }, data: { status: "QUOTATION_RECEIVED" } });
 
-  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true } });
-  if (boq && ["DRAFT", "ASSIGNED", "SITE_VISIT_DONE", "VENDOR_QUOTING"].includes(boq.status)) {
+  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true, deletedAt: true } });
+  if (boq && !boq.deletedAt && ["DRAFT", "ASSIGNED", "SITE_VISIT_DONE", "VENDOR_QUOTING"].includes(boq.status)) {
     await db.bOQ.update({ where: { id: boqId }, data: { status: "QUOTES_RECEIVED" } });
   }
 
@@ -252,7 +288,7 @@ export async function generateQuotation(formData: FormData) {
     where: { id: inquiryId },
     include: { quotes: { orderBy: { receivedAt: "desc" } } },
   });
-  if (!boq || !inquiry || inquiry.boqId !== boqId) throw new Error("Vendor or BOQ not found.");
+  if (!boq || boq.deletedAt || !inquiry || inquiry.boqId !== boqId) throw new Error("Vendor or BOQ not found.");
 
   const quote = inquiry.quotes[0];
   if (!quote) throw new Error("This vendor has not submitted a quotation yet.");

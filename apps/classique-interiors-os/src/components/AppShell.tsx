@@ -34,10 +34,14 @@ export default function AppShell({
     { href: "/boqs", label: "BOQs", icon: ICONS.file },
   ];
   if (user.role === "OWNER") {
+    items.push({ href: "/boqs/trash", label: "Trash", icon: ICONS.file });
     items.push({ href: "/users", label: "Users", icon: ICONS.users });
   }
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) => {
+    if (href === "/boqs") return pathname === href || (pathname.startsWith("/boqs/") && pathname !== "/boqs/trash");
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   return (
     <div className="min-h-screen md:flex">

@@ -45,6 +45,8 @@ model BOQ {
   assignedAt         DateTime?
   visitToken         String    @unique
   createdAt          DateTime  @default(now())
+  deletedAt          DateTime?
+  purgeAttemptedAt   DateTime?
 
   createdBy       User            @relation("createdBy", fields: [createdById], references: [id])
   assignedTo      User?           @relation("assignedTo", fields: [assignedToId], references: [id])
@@ -86,6 +88,7 @@ model SiteVisitFile {
   size        Int
   mimeType    String?
   createdAt   DateTime @default(now())
+  purgedAt    DateTime?
 
   siteVisit SiteVisit @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
 }
@@ -116,6 +119,7 @@ model VendorQuote {
   fileName      String?
   receivedAt    DateTime @default(now())
   enteredById   String?
+  filePurgedAt  DateTime?
 
   inquiry VendorInquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
 }

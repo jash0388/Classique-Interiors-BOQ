@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   if (user.role === "FIELD") {
     const boqs = await db.bOQ.findMany({
-      where: { assignedToId: user.uid },
+      where: { assignedToId: user.uid, deletedAt: null },
       orderBy: [{ status: "asc" }, { deadline: "asc" }],
       select: {
         id: true,
@@ -108,11 +108,11 @@ export default async function DashboardPage() {
     },
   } as const;
   const [boqs, assigned, quoting, quotesReceived, completed] = await Promise.all([
-    db.bOQ.findMany({ orderBy: { createdAt: "desc" }, take: 8, select: summarySelect }),
-    db.bOQ.count({ where: { status: "ASSIGNED" } }),
-    db.bOQ.count({ where: { status: "VENDOR_QUOTING" } }),
-    db.bOQ.count({ where: { status: "QUOTES_RECEIVED" } }),
-    db.bOQ.count({ where: { status: "COMPLETED" } }),
+    db.bOQ.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 8, select: summarySelect }),
+    db.bOQ.count({ where: { status: "ASSIGNED", deletedAt: null } }),
+    db.bOQ.count({ where: { status: "VENDOR_QUOTING", deletedAt: null } }),
+    db.bOQ.count({ where: { status: "QUOTES_RECEIVED", deletedAt: null } }),
+    db.bOQ.count({ where: { status: "COMPLETED", deletedAt: null } }),
   ]);
   const views = boqs.map((boq) => toBoqView(boq));
 

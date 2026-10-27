@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   const inquiryParam = req.nextUrl.searchParams.get("inquiry");
 
   const boq = await db.bOQ.findUnique({ where: { id }, include: { items: { orderBy: { srNo: "asc" } } } });
-  if (!boq) return NextResponse.json({ error: "BOQ not found" }, { status: 404 });
+  if (!boq || boq.deletedAt) return NextResponse.json({ error: "BOQ not found" }, { status: 404 });
 
   const inquiry = inquiryParam
     ? await db.vendorInquiry.findUnique({ where: { id: inquiryParam } })
