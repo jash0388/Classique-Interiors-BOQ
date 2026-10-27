@@ -1,7 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const prisma = process.env.TURSO_DATABASE_URL
+  ? new PrismaClient({
+      adapter: new (await import("@prisma/adapter-libsql")).PrismaLibSQL({
+        url: process.env.TURSO_DATABASE_URL,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+      }),
+    })
+  : new PrismaClient();
 
 const PASSWORD = process.env.SEED_DEFAULT_PASSWORD;
 

@@ -9,12 +9,14 @@
     "lint": "eslint",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.mjs",
+    "db:init:remote": "node scripts/init-turso.mjs",
     "make-icons": "node scripts/make-icons.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
+    "@prisma/adapter-libsql": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "@vercel/blob": "^2.8.2",
     "archiver": "^7.0.1",
