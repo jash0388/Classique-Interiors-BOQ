@@ -1,0 +1,140 @@
+// Roles: OWNER | MANAGER | FIELD
+// BOQ status: DRAFT | ASSIGNED | SITE_VISIT_DONE | VENDOR_QUOTING | QUOTES_RECEIVED | COMPLETED | ON_HOLD
+// File kind: photo | video | document
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String
+  city         String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  createdBOQs  BOQ[]   @relation("createdBy")
+  assignedBOQs BOQ[]   @relation("assignedTo")
+}
+
+model BOQ {
+  id                 String    @id @default(cuid())
+  number             String    @unique
+  title              String
+  clientName         String
+  clientContactName  String?
+  clientContactPhone String?
+  siteAddress        String
+  city               String?
+  siteDetails        String?
+  deadline           DateTime?
+  notes              String?
+  status             String    @default("DRAFT")
+  createdById        String
+  assignedToId       String?
+  assignedAt         DateTime?
+  visitToken         String    @unique
+  createdAt          DateTime  @default(now())
+
+  createdBy       User            @relation("createdBy", fields: [createdById], references: [id])
+  assignedTo      User?           @relation("assignedTo", fields: [assignedToId], references: [id])
+  items           BOQItem[]
+  siteVisit       SiteVisit?
+  vendorInquiries VendorInquiry[]
+  quotations      Quotation[]
+}
+
+model BOQItem {
+  id          String  @id @default(cuid())
+  boqId       String
+  srNo        Int
+  description String
+  unit        String  @default("nos")
+  quantity    Float
+  remarks     String?
+
+  boq BOQ @relation(fields: [boqId], references: [id], onDelete: Cascade)
+}
+
+model SiteVisit {
+  id           String   @id @default(cuid())
+  boqId        String   @unique
+  notes        String?
+  visitedAt    DateTime @default(now())
+  submittedById String?
+
+  boq   BOQ             @relation(fields: [boqId], references: [id], onDelete: Cascade)
+  files SiteVisitFile[]
+}
+
+model SiteVisitFile {
+  id          String   @id @default(cuid())
+  siteVisitId String
+  kind        String
+  url         String
+  filename    String
+  size        Int
+  mimeType    String?
+  createdAt   DateTime @default(now())
+
+  siteVisit SiteVisit @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+}
+
+model VendorInquiry {
+  id           String    @id @default(cuid())
+  boqId        String
+  vendorName   String
+  vendorPhone  String?
+  vendorEmail  String?
+  instructions String?
+  dueDate      DateTime?
+  status       String    @default("SENT")
+  createdAt    DateTime  @default(now())
+
+  boq    BOQ           @relation(fields: [boqId], references: [id], onDelete: Cascade)
+  quotes VendorQuote[]
+}
+
+model VendorQuote {
+  id            String   @id @default(cuid())
+  inquiryId     String
+  amount        Float
+  itemRatesJson String?
+  leadTimeDays  Int?
+  notes         String?
+  fileUrl       String?
+  fileName      String?
+  receivedAt    DateTime @default(now())
+  enteredById   String?
+
+  inquiry VendorInquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+}
+
+model Quotation {
+  id               String   @id @default(cuid())
+  boqId            String
+  number           String   @unique
+  vendorInquiryId  String?
+  vendorName       String
+  marginPercent    Float
+  gstPercent       Float
+  subtotal         Float
+  marginAmount     Float
+  gstAmount        Float
+  grandTotal       Float
+  itemsSnapshotJson String
+  pdfUrl           String?
+  createdById      String
+  createdAt        DateTime @default(now())
+
+  boq BOQ @relation(fields: [boqId], references: [id], onDelete: Cascade)
+}

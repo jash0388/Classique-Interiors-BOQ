@@ -47,3 +47,12 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Local Classique Interiors OS data and generated files
+apps/classique-interiors-os/.env*
+!apps/classique-interiors-os/.env.example
+apps/classique-interiors-os/.next/
+apps/classique-interiors-os/node_modules/
+apps/classique-interiors-os/uploads/
+apps/classique-interiors-os/prisma/*.db
+apps/classique-interiors-os/prisma/*.db-journal
