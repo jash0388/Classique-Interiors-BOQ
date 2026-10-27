@@ -20,14 +20,27 @@ export default async function BoqsPage({
   const boqs = await db.bOQ.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include: {
-      assignedTo: true,
-      createdBy: true,
-      vendorInquiries: { include: { quotes: true } },
+    select: {
+      id: true,
+      number: true,
+      title: true,
+      clientName: true,
+      siteAddress: true,
+      city: true,
+      deadline: true,
+      status: true,
+      assignedTo: { select: { name: true } },
+      vendorInquiries: {
+        select: {
+          id: true,
+          vendorName: true,
+          quotes: { select: { amount: true, receivedAt: true } },
+        },
+      },
     },
   });
 
-  const views = boqs.map(toBoqView);
+  const views = boqs.map((boq) => toBoqView(boq));
   const isField = user.role === "FIELD";
 
   return (

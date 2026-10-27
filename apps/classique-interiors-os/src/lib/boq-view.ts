@@ -1,10 +1,8 @@
 import { BOQ, User, VendorInquiry, VendorQuote } from "@prisma/client";
-import { rankVendors, type InquiryWithQuotes } from "@/lib/l1";
 
-export type BoqWithIncludes = BOQ & {
-  assignedTo: User | null;
-  createdBy: User;
-  vendorInquiries: (VendorInquiry & { quotes: VendorQuote[] })[];
+export type BoqWithIncludes = Pick<BOQ, "id" | "number" | "title" | "clientName" | "siteAddress" | "city" | "deadline" | "status"> & {
+  assignedTo: Pick<User, "name"> | null;
+  vendorInquiries: (Pick<VendorInquiry, "id" | "vendorName"> & { quotes: Pick<VendorQuote, "amount" | "receivedAt">[] })[];
 };
 
 export type BoqView = {
@@ -24,8 +22,16 @@ export type BoqView = {
 };
 
 export function toBoqView(boq: BoqWithIncludes): BoqView {
-  const ranked = rankVendors(boq.vendorInquiries as InquiryWithQuotes[]);
-  const l1 = ranked.find((r) => r.isL1);
+  const latestByInquiry = new Map<string, { amount: number; receivedAt: Date; vendorName: string }>();
+  for (const inquiry of boq.vendorInquiries) {
+    for (const quote of inquiry.quotes) {
+      const latest = latestByInquiry.get(inquiry.id);
+      if (!latest || quote.receivedAt > latest.receivedAt) {
+        latestByInquiry.set(inquiry.id, { ...quote, vendorName: inquiry.vendorName });
+      }
+    }
+  }
+  const l1 = [...latestByInquiry.values()].sort((a, b) => a.amount - b.amount)[0];
   return {
     id: boq.id,
     number: boq.number,
@@ -38,7 +44,7 @@ export function toBoqView(boq: BoqWithIncludes): BoqView {
     assignedToName: boq.assignedTo?.name ?? null,
     vendorsCount: boq.vendorInquiries.length,
     quotesCount: boq.vendorInquiries.filter((v) => v.quotes.length > 0).length,
-    l1VendorName: l1?.inquiry.vendorName ?? null,
+    l1VendorName: l1?.vendorName ?? null,
     overdue: Boolean(boq.deadline && boq.deadline.getTime() < Date.now() && boq.status !== "COMPLETED"),
   };
 }

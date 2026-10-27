@@ -42,10 +42,21 @@ export default function BoqList({ boqs, emptyText = "No BOQs yet." }: { boqs: Bo
               <tr
                 key={v.id}
                 className="cursor-pointer hover:bg-stone-50"
+                onMouseEnter={() => router.prefetch(`/boqs/${v.id}`)}
+                onFocus={() => router.prefetch(`/boqs/${v.id}`)}
+                tabIndex={0}
+                aria-label={`Open BOQ ${v.number}`}
                 onClick={(event) => {
                   const target = event.target;
                   if (target instanceof HTMLElement && target.closest("a, button")) return;
                   router.push(`/boqs/${v.id}`);
+                }}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    router.push(`/boqs/${v.id}`);
+                  }
                 }}
               >
                 <td className="px-4 py-3">

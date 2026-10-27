@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { toBoqView, type BoqWithIncludes } from "@/lib/boq-view";
+import { toBoqView } from "@/lib/boq-view";
 import BoqList from "@/components/BoqList";
 import { Card, Empty, btn } from "@/components/ui";
 import { statusLabel } from "@/lib/status";
@@ -11,17 +11,21 @@ export const metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const user = await requireUser();
 
-  const include = {
-    assignedTo: true,
-    createdBy: true,
-    vendorInquiries: { include: { quotes: true } },
-  } as const;
-
   if (user.role === "FIELD") {
     const boqs = await db.bOQ.findMany({
       where: { assignedToId: user.uid },
       orderBy: [{ status: "asc" }, { deadline: "asc" }],
-      include,
+      select: {
+        id: true,
+        number: true,
+        title: true,
+        clientName: true,
+        siteAddress: true,
+        city: true,
+        deadline: true,
+        status: true,
+        visitToken: true,
+      },
     });
     const mine = boqs.filter((b) => b.status !== "COMPLETED");
     const done = boqs.filter((b) => b.status === "COMPLETED");
@@ -38,8 +42,7 @@ export default async function DashboardPage() {
           ) : (
             <ul className="divide-y divide-stone-100">
               {mine.map((b) => {
-                const v = toBoqView(b as BoqWithIncludes);
-                const overdue = v.deadline && new Date(v.deadline) < new Date();
+                const overdue = b.deadline && b.deadline < new Date() && b.status !== "COMPLETED";
                 return (
                   <li key={b.id} className="py-3 first:pt-0 last:pb-0">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -53,7 +56,7 @@ export default async function DashboardPage() {
                         </p>
                         <p className="mt-0.5 text-xs text-stone-500">
                           Deadline:{" "}
-                          <span className={overdue ? "font-semibold text-red-600" : ""}>{v.deadline ? new Date(v.deadline).toLocaleDateString("en-IN") : "—"}</span>
+                          <span className={overdue ? "font-semibold text-red-600" : ""}>{b.deadline ? new Date(b.deadline).toLocaleDateString("en-IN") : "—"}</span>
                           {" · "}
                           {statusLabel(b.status)}
                         </p>
@@ -86,15 +89,38 @@ export default async function DashboardPage() {
     );
   }
 
-  const boqs = await db.bOQ.findMany({ orderBy: { createdAt: "desc" }, include });
-  const views = boqs.map((b) => toBoqView(b as BoqWithIncludes));
-  const count = (s: string) => views.filter((v) => v.status === s).length;
+  const summarySelect = {
+    id: true,
+    number: true,
+    title: true,
+    clientName: true,
+    siteAddress: true,
+    city: true,
+    deadline: true,
+    status: true,
+    assignedTo: { select: { name: true } },
+    vendorInquiries: {
+      select: {
+        id: true,
+        vendorName: true,
+        quotes: { select: { amount: true, receivedAt: true } },
+      },
+    },
+  } as const;
+  const [boqs, assigned, quoting, quotesReceived, completed] = await Promise.all([
+    db.bOQ.findMany({ orderBy: { createdAt: "desc" }, take: 8, select: summarySelect }),
+    db.bOQ.count({ where: { status: "ASSIGNED" } }),
+    db.bOQ.count({ where: { status: "VENDOR_QUOTING" } }),
+    db.bOQ.count({ where: { status: "QUOTES_RECEIVED" } }),
+    db.bOQ.count({ where: { status: "COMPLETED" } }),
+  ]);
+  const views = boqs.map((boq) => toBoqView(boq));
 
   const stats = [
-    { label: "Site visit pending", value: count("ASSIGNED") + count("DRAFT"), href: "/boqs?status=ASSIGNED" },
-    { label: "Vendor quoting", value: count("VENDOR_QUOTING"), href: "/boqs?status=VENDOR_QUOTING" },
-    { label: "Quotes received", value: count("QUOTES_RECEIVED"), href: "/boqs?status=QUOTES_RECEIVED" },
-    { label: "Completed", value: count("COMPLETED"), href: "/boqs?status=COMPLETED" },
+    { label: "Site visit pending", value: assigned, href: "/boqs?status=ASSIGNED" },
+    { label: "Vendor quoting", value: quoting, href: "/boqs?status=VENDOR_QUOTING" },
+    { label: "Quotes received", value: quotesReceived, href: "/boqs?status=QUOTES_RECEIVED" },
+    { label: "Completed", value: completed, href: "/boqs?status=COMPLETED" },
   ];
 
   return (
@@ -123,7 +149,7 @@ export default async function DashboardPage() {
       </div>
 
       <Card title="Recent BOQs" actions={<Link href="/boqs" className={btn.sm}>View all</Link>}>
-        <BoqList boqs={views.slice(0, 8)} emptyText="Nothing here yet. Create your first BOQ." />
+          <BoqList boqs={views} emptyText="Nothing here yet. Create your first BOQ." />
       </Card>
     </div>
   );
