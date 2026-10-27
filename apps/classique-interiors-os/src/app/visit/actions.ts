@@ -40,7 +40,13 @@ export async function submitVisit(_prev: VisitState, formData: FormData): Promis
   const notes = str(formData.get("notes"));
   const files = parseFiles(formData.get("files"));
 
-  const existing = await db.siteVisit.findUnique({ where: { boqId: boq.id } });
+  const existing = await db.siteVisit.findUnique({
+    where: { boqId: boq.id },
+    select: { id: true, notes: true, submittedById: true, files: { select: { id: true }, take: 1 } },
+  });
+  if (files.length === 0 && !existing?.files.length) {
+    return { error: "Attach at least one photo or file and wait for the upload to finish before submitting." };
+  }
   let siteVisitId: string;
   if (existing) {
     await db.siteVisit.update({

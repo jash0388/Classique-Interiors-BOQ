@@ -18,6 +18,7 @@ export default function FilePicker({
   visitToken,
   mode = "local",
   initial = [],
+  onUploadingChange,
 }: {
   name: string;
   accept?: string;
@@ -26,27 +27,32 @@ export default function FilePicker({
   visitToken?: string;
   mode?: "local" | "blob";
   initial?: FileMeta[];
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const [metas, setMetas] = useState<FileMeta[]>(initial);
   const [busy, setBusy] = useState(0);
   const [error, setError] = useState("");
   const inputKey = useRef(0);
+  const pendingUploads = useRef(0);
 
   async function handleFiles(list: FileList | null) {
     if (!list || list.length === 0) return;
     setError("");
-    setBusy((b) => b + list.length);
     const picked = Array.from(list);
+    pendingUploads.current += picked.length;
+    setBusy(pendingUploads.current);
+    onUploadingChange?.(true);
     try {
-      const uploaded: FileMeta[] = [];
       for (const file of picked) {
-        uploaded.push(await uploadOne(file));
+        const uploaded = await uploadOne(file);
+        setMetas((m) => [...m, uploaded]);
       }
-      setMetas((m) => [...m, ...uploaded]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed, please try again.");
     } finally {
-      setBusy((b) => Math.max(0, b - picked.length));
+      pendingUploads.current = Math.max(0, pendingUploads.current - picked.length);
+      setBusy(pendingUploads.current);
+      onUploadingChange?.(pendingUploads.current > 0);
       inputKey.current += 1;
     }
   }

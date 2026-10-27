@@ -56,3 +56,5 @@ apps/classique-interiors-os/node_modules/
 apps/classique-interiors-os/uploads/
 apps/classique-interiors-os/prisma/*.db
 apps/classique-interiors-os/prisma/*.db-journal
+.vercel
+.env*
