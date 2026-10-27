@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StatusChip, Empty } from "@/components/ui";
 import { statusLabel, statusColor } from "@/lib/status";
 import { formatDate } from "@/lib/format";
@@ -15,6 +18,7 @@ function Deadline({ v }: { v: BoqView }) {
 }
 
 export default function BoqList({ boqs, emptyText = "No BOQs yet." }: { boqs: BoqView[]; emptyText?: string }) {
+  const router = useRouter();
   if (boqs.length === 0) return <Empty>{emptyText}</Empty>;
 
   return (
@@ -35,12 +39,22 @@ export default function BoqList({ boqs, emptyText = "No BOQs yet." }: { boqs: Bo
           </thead>
           <tbody className="divide-y divide-stone-100">
             {boqs.map((v) => (
-              <tr key={v.id} className="hover:bg-stone-50">
+              <tr
+                key={v.id}
+                className="cursor-pointer hover:bg-stone-50"
+                onClick={(event) => {
+                  const target = event.target;
+                  if (target instanceof HTMLElement && target.closest("a, button")) return;
+                  router.push(`/boqs/${v.id}`);
+                }}
+              >
                 <td className="px-4 py-3">
                   <Link href={`/boqs/${v.id}`} className="font-medium text-teal-700 hover:underline">
                     {v.number}
                   </Link>
-                  <p className="max-w-xs truncate text-xs text-stone-500">{v.title}</p>
+                  <Link href={`/boqs/${v.id}`} className="block max-w-xs truncate text-xs text-stone-500 hover:text-teal-700 hover:underline">
+                    {v.title}
+                  </Link>
                 </td>
                 <td className="px-4 py-3">{v.clientName}</td>
                 <td className="px-4 py-3">
