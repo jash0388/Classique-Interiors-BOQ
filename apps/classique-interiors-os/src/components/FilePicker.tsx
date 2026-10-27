@@ -61,7 +61,7 @@ export default function FilePicker({
     if (mode === "blob") {
       const { upload } = await import("@vercel/blob/client");
       const blob = await upload(file.name, file, {
-        access: "public",
+        access: "private",
         handleUploadUrl: "/api/upload/blob",
         clientPayload: visitToken ?? "",
       });
