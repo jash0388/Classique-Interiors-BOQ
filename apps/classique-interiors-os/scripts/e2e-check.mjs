@@ -22,6 +22,12 @@ async function main() {
   const upload401 = await fetch(`${BASE}/api/upload`, { method: "POST" });
   ok("upload API rejects empty request", upload401.status === 400);
 
+  const invalidBlobUrl = await fetch(`${BASE}/api/blob?url=https%3A%2F%2Fexample.com%2Ffile`);
+  ok("private blob API rejects non-blob URLs", invalidBlobUrl.status === 400);
+
+  const privateBlob401 = await fetch(`${BASE}/api/blob?url=https%3A%2F%2Fstore.private.blob.vercel-storage.com%2Ffile`);
+  ok("private blob API rejects unauthorized access", privateBlob401.status === 401);
+
   const invalidType = new FormData();
   invalidType.append("file", new Blob(["not a photo"], { type: "application/x-msdownload" }), "payload.exe");
   invalidType.append("visitToken", "bogus-token-123");

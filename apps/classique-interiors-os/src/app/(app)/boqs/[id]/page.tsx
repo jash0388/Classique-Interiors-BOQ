@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { storageMode } from "@/lib/storage";
+import { fileHref, storageMode } from "@/lib/storage";
 import { statusLabel, statusColor } from "@/lib/status";
 import { formatDate, formatDateTime, formatINR } from "@/lib/format";
 import { assignmentMessage, assignmentSubject, mailLink, waLink } from "@/lib/notify";
@@ -165,9 +165,9 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
             {photos.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {photos.map((f) => (
-                  <a key={f.id} href={f.url} target="_blank" rel="noreferrer" title={f.filename}>
+                  <a key={f.id} href={fileHref(f.url, f.filename)} target="_blank" rel="noreferrer" title={f.filename}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={f.url} alt={f.filename} className="h-24 w-24 rounded-lg object-cover ring-1 ring-stone-200" />
+                    <img src={fileHref(f.url, f.filename)} alt={f.filename} className="h-24 w-24 rounded-lg object-cover ring-1 ring-stone-200" />
                   </a>
                 ))}
               </div>
@@ -177,7 +177,7 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
                 {videos.map((f) => (
                   <li key={f.id}>
                     🎬{" "}
-                    <a href={f.url} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
+                    <a href={fileHref(f.url, f.filename)} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
                       {f.filename}
                     </a>
                   </li>
@@ -189,7 +189,7 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
                 {docs.map((f) => (
                   <li key={f.id}>
                     📄{" "}
-                    <a href={f.url} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
+                    <a href={fileHref(f.url, f.filename)} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
                       {f.filename}
                     </a>
                   </li>

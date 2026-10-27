@@ -53,7 +53,7 @@ async function putLocal(file: File): Promise<StoredFile> {
 async function putBlob(file: File): Promise<StoredFile> {
   const { put } = await import("@vercel/blob");
   const blob = await put(safeStoredName(file.name), file, {
-    access: "public",
+    access: "private",
     contentType: file.type || "application/octet-stream",
   });
   return {
@@ -92,6 +92,14 @@ export async function fileBytes(url: string): Promise<{ body: Buffer; filename: 
     return { body: Buffer.concat(chunks), filename: path.basename(p) };
   }
   if (url.startsWith("http")) {
+    if (url.includes(".private.blob.vercel-storage.com")) {
+      const { get } = await import("@vercel/blob");
+      const blob = await get(url, { access: "private" });
+      if (!blob || blob.statusCode !== 200) return null;
+      const body = Buffer.from(await new Response(blob.stream).arrayBuffer());
+      const name = new URL(url).pathname.split("/").pop() || "file";
+      return { body, filename: decodeURIComponent(name) };
+    }
     const res = await fetch(url);
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
@@ -99,6 +107,19 @@ export async function fileBytes(url: string): Promise<{ body: Buffer; filename: 
     return { body: buf, filename: decodeURIComponent(name) };
   }
   return null;
+}
+
+export function fileHref(url: string, filename?: string, visitToken?: string): string {
+  if (url.includes(".private.blob.vercel-storage.com/")) {
+    const params = new URLSearchParams({ url });
+    if (filename) params.set("name", filename);
+    if (visitToken) params.set("token", visitToken);
+    return `/api/blob?${params.toString()}`;
+  }
+  if (url.startsWith("/api/files/") && visitToken) {
+    return `${url}?${new URLSearchParams({ token: visitToken }).toString()}`;
+  }
+  return url;
 }
 
 export const MIME_BY_EXT: Record<string, string> = {

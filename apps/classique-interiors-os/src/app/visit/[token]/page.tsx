@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { storageMode } from "@/lib/storage";
+import { fileHref, storageMode } from "@/lib/storage";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { COMPANY } from "@/lib/company";
 import VisitForm from "../VisitForm";
@@ -29,7 +29,7 @@ export default async function VisitPage({ params }: { params: Promise<{ token: s
 
   const mode = storageMode();
   const visit = boq.siteVisit;
-  const srcFor = (url: string) => (url.startsWith("http") ? url : `${url}?token=${token}`);
+  const srcFor = (url: string, filename: string) => fileHref(url, filename, token);
   const photos = (visit?.files ?? []).filter((f) => f.kind === "photo");
   const videos = (visit?.files ?? []).filter((f) => f.kind === "video");
   const docs = (visit?.files ?? []).filter((f) => f.kind === "document");
@@ -94,9 +94,9 @@ export default async function VisitPage({ params }: { params: Promise<{ token: s
             {photos.length > 0 ? (
               <div className="mb-3 flex flex-wrap gap-2">
                 {photos.map((f) => (
-                  <a key={f.id} href={srcFor(f.url)} target="_blank" rel="noreferrer">
+                  <a key={f.id} href={srcFor(f.url, f.filename)} target="_blank" rel="noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={srcFor(f.url)} alt={f.filename} className="h-20 w-20 rounded-lg object-cover ring-1 ring-stone-200" />
+                    <img src={srcFor(f.url, f.filename)} alt={f.filename} className="h-20 w-20 rounded-lg object-cover ring-1 ring-stone-200" />
                   </a>
                 ))}
               </div>
@@ -106,7 +106,7 @@ export default async function VisitPage({ params }: { params: Promise<{ token: s
                 {videos.map((f) => (
                   <li key={f.id}>
                     🎬{" "}
-                    <a href={srcFor(f.url)} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
+                    <a href={srcFor(f.url, f.filename)} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
                       {f.filename}
                     </a>
                   </li>
@@ -118,7 +118,7 @@ export default async function VisitPage({ params }: { params: Promise<{ token: s
                 {docs.map((f) => (
                   <li key={f.id}>
                     📄{" "}
-                    <a href={srcFor(f.url)} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
+                    <a href={srcFor(f.url, f.filename)} target="_blank" rel="noreferrer" className="text-teal-700 hover:underline">
                       {f.filename}
                     </a>
                   </li>

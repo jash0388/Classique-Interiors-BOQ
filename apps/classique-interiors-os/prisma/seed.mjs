@@ -10,7 +10,12 @@ const prisma = process.env.TURSO_DATABASE_URL
     })
   : new PrismaClient();
 
-const PASSWORD = process.env.SEED_DEFAULT_PASSWORD;
+let passwords = {};
+try {
+  passwords = JSON.parse(process.env.SEED_USER_PASSWORDS_JSON || "{}");
+} catch {
+  throw new Error("SEED_USER_PASSWORDS_JSON must be a valid JSON object keyed by user email.");
+}
 
 const users = [
   { name: "Owner (Sir)", email: "owner@classiqueinteriors.in", role: "OWNER", city: "Kolkata", phone: "" },
@@ -24,11 +29,15 @@ const users = [
 ];
 
 async function main() {
-  if (!PASSWORD || PASSWORD.length < 12) {
-    throw new Error("Set SEED_DEFAULT_PASSWORD to a unique password of at least 12 characters before seeding users.");
+  const userPasswords = users.map((u) => passwords[u.email]);
+  if (userPasswords.some((password) => typeof password !== "string" || password.length < 16)) {
+    throw new Error("Set a unique SEED_USER_PASSWORDS_JSON password of at least 16 characters for every seeded account.");
   }
-  const passwordHash = await bcrypt.hash(PASSWORD, 10);
+  if (new Set(userPasswords).size !== userPasswords.length) {
+    throw new Error("Each seeded account must have a different password.");
+  }
   for (const u of users) {
+    const passwordHash = await bcrypt.hash(passwords[u.email], 10);
     await prisma.user.upsert({
       where: { email: u.email },
       update: { name: u.name, role: u.role, city: u.city, phone: u.phone || null },
