@@ -23,6 +23,7 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
     where: { id },
     include: {
       items: { orderBy: { srNo: "asc" } },
+      referenceFiles: { where: { purgedAt: null }, orderBy: { createdAt: "asc" } },
       siteVisit: { include: { files: { orderBy: { createdAt: "asc" } } } },
       vendorInquiries: { include: { quotes: { orderBy: { receivedAt: "desc" } } }, orderBy: { createdAt: "asc" } },
       quotations: { orderBy: { createdAt: "desc" } },
@@ -52,6 +53,7 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
   const fieldUsers = canManage
     ? await db.user.findMany({ where: { role: "FIELD", active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, city: true } })
     : [];
+  const savedVendors = canManage ? await db.vendor.findMany({ where: { active: true }, orderBy: [{ trade: "asc" }, { name: "asc" }], select: { id: true, name: true, trade: true, phone: true, email: true } }) : [];
 
   const visit = boq.siteVisit;
   const photos = (visit?.files ?? []).filter((f) => f.kind === "photo");
@@ -141,6 +143,19 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
         )}
       </Card>
 
+      {boq.referenceFiles.length ? (
+        <Card title="Client reference images" subtitle={`${boq.referenceFiles.length} image(s) submitted with the request`}>
+          <div className="flex flex-wrap gap-2">
+            {boq.referenceFiles.map((file) => (
+              <a key={file.id} href={fileHref(file.url, file.filename)} target="_blank" rel="noreferrer" title={file.filename}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={fileHref(file.url, file.filename)} alt={file.filename} className="h-28 w-28 rounded-lg object-cover ring-1 ring-stone-200" />
+              </a>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
       {canManage ? (
         <Card title="Site visit assignment">
           <AssignCard
@@ -206,7 +221,7 @@ export default async function BoqDetailPage({ params }: { params: Promise<{ id: 
       <Card
         title="Sub-vendor inquiries"
         subtitle="Package = vendor BOQ (Excel) + site photos & notes + instructions. Share the ZIP with vendors, then enter their quotes here."
-        actions={canManage ? <AddVendorForm boqId={boq.id} /> : undefined}
+        actions={canManage ? <AddVendorForm boqId={boq.id} vendors={savedVendors} /> : undefined}
       >
         {boq.vendorInquiries.length === 0 ? (
           <Empty>{canManage ? "No vendors added yet. Add vendors, download the package ZIP and send it to them." : "No vendors added yet."}</Empty>

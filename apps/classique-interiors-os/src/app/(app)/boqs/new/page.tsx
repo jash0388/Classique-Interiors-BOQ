@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { createBOQ } from "../actions";
 import ItemsEditor from "@/components/ItemsEditor";
@@ -10,11 +9,6 @@ export const metadata = { title: "New BOQ" };
 
 export default async function NewBoqPage() {
   await requireRole("OWNER", "MANAGER");
-  const fieldUsers = await db.user.findMany({
-    where: { role: "FIELD", active: true },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, city: true },
-  });
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
@@ -60,18 +54,6 @@ export default async function NewBoqPage() {
               <label>Deadline (end date)</label>
               <input name="deadline" type="date" />
             </div>
-            <div>
-              <label>Assign site visit to</label>
-              <select name="assignedToId" defaultValue="">
-                <option value="">— Assign later —</option>
-                {fieldUsers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                    {u.city ? ` (${u.city})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="sm:col-span-2">
               <label>Internal notes</label>
               <textarea name="notes" rows={2} placeholder="Anything the assigned person should know" />
@@ -85,7 +67,7 @@ export default async function NewBoqPage() {
 
         <div className="flex justify-end">
           <SubmitButton className={btn.primary} pendingLabel="Creating…">
-            Create BOQ
+            Save BOQ · assign next
           </SubmitButton>
         </div>
       </form>

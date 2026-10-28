@@ -5,9 +5,10 @@ import FilePicker from "@/components/FilePicker";
 import SubmitButton from "@/components/SubmitButton";
 import { btn } from "@/components/ui";
 import { DEFAULT_INSTRUCTIONS } from "@/lib/constants";
+import { formatINR } from "@/lib/format";
 import { addVendorInquiry, addVendorQuote } from "../actions";
 
-export function AddVendorForm({ boqId }: { boqId: string }) {
+export function AddVendorForm({ boqId, vendors = [] }: { boqId: string; vendors?: { id: string; name: string; trade: string; phone: string | null; email: string | null }[] }) {
   const [open, setOpen] = useState(false);
 
   if (!open) {
@@ -21,10 +22,11 @@ export function AddVendorForm({ boqId }: { boqId: string }) {
   return (
     <form action={addVendorInquiry} className="space-y-3 rounded-xl bg-stone-50 p-3">
       <input type="hidden" name="boqId" value={boqId} />
+      {vendors.length ? <div><label>Choose from saved vendors</label><select name="vendorId" defaultValue=""><option value="">— Or enter a one-time vendor below —</option>{vendors.map(v => <option key={v.id} value={v.id}>{v.name} · {v.trade}</option>)}</select><p className="mt-1 text-xs text-stone-500">Choosing a saved vendor fills their contact details when the request is created.</p></div> : null}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label>Vendor name *</label>
-          <input name="vendorName" type="text" required placeholder="e.g. Shree Enterprises" />
+          <input name="vendorName" type="text" placeholder="e.g. Shree Enterprises (optional if choosing a saved vendor)" />
         </div>
         <div>
           <label>Vendor phone</label>
@@ -73,6 +75,30 @@ export function QuoteForm({
   const [open, setOpen] = useState(false);
   const [showRates, setShowRates] = useState(false);
   const [rates, setRates] = useState<Record<string, string>>({});
+  const [amount, setAmount] = useState("");
+  const [reading, setReading] = useState(false);
+  const [readResult, setReadResult] = useState<{ candidates: { label: string; amount: number; excerpt: string }[]; warnings: string[]; preview: string; readMode: string } | null>(null);
+  const [readError, setReadError] = useState("");
+
+  async function readQuoteFile(file: File) {
+    setReading(true);
+    setReadError("");
+    setReadResult(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/quotes/extract", { method: "POST", body: form });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not read the quotation.");
+      setReadResult(result);
+      const preferred = result.candidates?.find((c: { label: string }) => c.label === "Grand total") ?? result.candidates?.[0];
+      if (preferred) setAmount(String(preferred.amount));
+    } catch (error) {
+      setReadError(error instanceof Error ? error.message : "Could not read the quotation.");
+    } finally {
+      setReading(false);
+    }
+  }
 
   if (!open) {
     return (
@@ -95,7 +121,7 @@ export function QuoteForm({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div>
           <label>Quoted amount (₹) *</label>
-          <input name="amount" type="number" min="1" step="0.01" required placeholder="e.g. 450000" />
+          <input name="amount" type="number" min="1" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 450000" />
         </div>
         <div>
           <label>Delivery days</label>
@@ -107,9 +133,19 @@ export function QuoteForm({
         </div>
       </div>
       <div>
-        <label>Attach their quotation file (PDF/scan, optional)</label>
-        <FilePicker name="quoteFile" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx" multiple={false} mode={mode} />
+        <label>Drop or attach their quotation file (PDF/scan/spreadsheet)</label>
+        <FilePicker name="quoteFile" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.csv,.docx,.txt" multiple={false} mode={mode} onFileSelected={readQuoteFile} />
+        <p className="mt-1 text-xs text-stone-500">Check the original quotation’s line items, taxes, exclusions and final total before entering the amount. The app ranks L1 from the verified total you save.</p>
       </div>
+      {reading ? <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800">Reading quotation text and checking for totals… Please still verify the result against the original.</p> : null}
+      {readError ? <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{readError}</p> : null}
+      {readResult ? <div className="space-y-2 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm">
+        <p className="font-semibold text-teal-900">Read {readResult.readMode}. Check every suggested figure against the attached original.</p>
+        {readResult.candidates.length ? <div className="flex flex-wrap gap-2">{readResult.candidates.map((candidate, i) => <button key={`${candidate.label}-${candidate.amount}-${i}`} type="button" onClick={() => setAmount(String(candidate.amount))} className="rounded-lg border border-teal-300 bg-white px-3 py-2 text-left hover:bg-teal-100"><span className="block text-xs text-stone-500">{candidate.label}</span><span className="font-semibold">{formatINR(candidate.amount)}</span><span className="block max-w-64 truncate text-xs text-stone-500">{candidate.excerpt}</span></button>)}</div> : <p className="text-amber-900">No total was confidently identified. Enter the amount after checking the original.</p>}
+        {readResult.warnings.map(w => <p key={w} className="text-amber-900">⚠ {w}</p>)}
+        <details><summary className="cursor-pointer text-xs font-medium text-teal-800">Review extracted text</summary><pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-white p-2 text-xs text-stone-700">{readResult.preview}</pre></details>
+      </div> : null}
+      <label className="flex items-start gap-2 rounded-lg border border-stone-200 bg-white p-3 text-sm"><input type="checkbox" name="reviewConfirmed" required className="mt-0.5 !w-auto" /><span>I checked the original quote and confirmed the amount, tax basis, exclusions, and any missing or provisional items.</span></label>
       {items.length > 0 ? (
         <div>
           <button type="button" onClick={() => setShowRates((s) => !s)} className="text-xs font-medium text-teal-700 hover:underline">

@@ -36,9 +36,9 @@ function safeStoredName(original: string) {
   return `${Date.now()}-${crypto.randomBytes(4).toString("hex")}-${base}${ext}`;
 }
 
-async function putLocal(file: File): Promise<StoredFile> {
+async function putLocal(file: File, intakeSessionId?: string): Promise<StoredFile> {
   await mkdir(UPLOAD_DIR, { recursive: true });
-  const storedName = safeStoredName(file.name);
+  const storedName = `${intakeSessionId ? `client-intake-${intakeSessionId}-` : ""}${safeStoredName(file.name)}`;
   const buf = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(UPLOAD_DIR, storedName), buf);
   return {
@@ -50,9 +50,10 @@ async function putLocal(file: File): Promise<StoredFile> {
   };
 }
 
-async function putBlob(file: File): Promise<StoredFile> {
+async function putBlob(file: File, intakeSessionId?: string): Promise<StoredFile> {
   const { put } = await import("@vercel/blob");
-  const blob = await put(safeStoredName(file.name), file, {
+  const name = safeStoredName(file.name);
+  const blob = await put(intakeSessionId ? `client-intake/${intakeSessionId}/${name}` : name, file, {
     access: "private",
     contentType: file.type || "application/octet-stream",
   });
@@ -65,9 +66,9 @@ async function putBlob(file: File): Promise<StoredFile> {
   };
 }
 
-export async function putFile(file: File): Promise<StoredFile> {
-  if (storageMode() === "blob") return putBlob(file);
-  return putLocal(file);
+export async function putFile(file: File, intakeSessionId?: string): Promise<StoredFile> {
+  if (storageMode() === "blob") return putBlob(file, intakeSessionId);
+  return putLocal(file, intakeSessionId);
 }
 
 export function storedPath(url: string): string | null {

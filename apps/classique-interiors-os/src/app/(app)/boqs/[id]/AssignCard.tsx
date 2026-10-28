@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import CopyButton from "@/components/CopyButton";
 import SubmitButton from "@/components/SubmitButton";
 import { btn } from "@/components/ui";
@@ -22,9 +23,17 @@ export default function AssignCard({
   visitUrl: string;
   assignedToName: string | null;
 }) {
+  const [notification, setNotification] = useState("");
+
+  async function saveAndNotify(formData: FormData) {
+    setNotification("");
+    const result = await assignBOQ(formData);
+    setNotification(result.emailSent ? "Assignment saved and email notification sent to the team member." : result.emailError);
+  }
+
   return (
     <div className="space-y-3">
-      <form action={assignBOQ} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+      <form action={saveAndNotify} className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <input type="hidden" name="boqId" value={boqId} />
         <div className="flex-1">
           <label>{assignedToId ? "Reassign site visit to" : "Assign site visit to"}</label>
@@ -44,6 +53,7 @@ export default function AssignCard({
           {assignedToId ? "Reassign" : "Assign"}
         </SubmitButton>
       </form>
+      {notification ? <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800">{notification}</p> : null}
 
       {assignedToId ? (
         <div className="rounded-xl bg-stone-50 p-3">

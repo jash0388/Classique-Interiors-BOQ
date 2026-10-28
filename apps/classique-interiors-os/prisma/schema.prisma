@@ -1,5 +1,5 @@
 // Roles: OWNER | MANAGER | FIELD
-// BOQ status: DRAFT | ASSIGNED | SITE_VISIT_DONE | VENDOR_QUOTING | QUOTES_RECEIVED | COMPLETED | ON_HOLD
+// BOQ status: REQUEST_RECEIVED | DRAFT | ASSIGNED | SITE_VISIT_DONE | VENDOR_QUOTING | QUOTES_RECEIVED | COMPLETED | ON_HOLD
 // File kind: photo | video | document
 
 generator client {
@@ -25,6 +25,7 @@ model User {
 
   createdBOQs  BOQ[]   @relation("createdBy")
   assignedBOQs BOQ[]   @relation("assignedTo")
+  createdVendors Vendor[]
 }
 
 model BOQ {
@@ -44,6 +45,7 @@ model BOQ {
   assignedToId       String?
   assignedAt         DateTime?
   visitToken         String    @unique
+  publicTrackingTokenHash String? @unique
   createdAt          DateTime  @default(now())
   deletedAt          DateTime?
   purgeAttemptedAt   DateTime?
@@ -52,8 +54,25 @@ model BOQ {
   assignedTo      User?           @relation("assignedTo", fields: [assignedToId], references: [id])
   items           BOQItem[]
   siteVisit       SiteVisit?
+  referenceFiles  ClientReferenceFile[]
   vendorInquiries VendorInquiry[]
   quotations      Quotation[]
+}
+
+model ClientReferenceFile {
+  id              String   @id @default(cuid())
+  boqId           String?
+  uploadSessionId String
+  url             String   @unique
+  filename        String
+  size            Int
+  mimeType        String?
+  createdAt       DateTime @default(now())
+  purgedAt        DateTime?
+
+  boq BOQ? @relation(fields: [boqId], references: [id], onDelete: Cascade)
+
+  @@index([uploadSessionId, boqId])
 }
 
 model BOQItem {
@@ -106,6 +125,26 @@ model VendorInquiry {
 
   boq    BOQ           @relation(fields: [boqId], references: [id], onDelete: Cascade)
   quotes VendorQuote[]
+  vendorId String?
+  vendor Vendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+}
+
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String
+  trade     String
+  phone     String?
+  email     String?
+  city      String?
+  notes     String?
+  active    Boolean  @default(true)
+  createdById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+  inquiries VendorInquiry[]
+  @@index([active, trade])
 }
 
 model VendorQuote {

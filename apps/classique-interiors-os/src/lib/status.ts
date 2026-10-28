@@ -1,4 +1,5 @@
 export const BOQ_STATUSES = [
+  "REQUEST_RECEIVED",
   "DRAFT",
   "ASSIGNED",
   "SITE_VISIT_DONE",
@@ -10,6 +11,7 @@ export const BOQ_STATUSES = [
 export type BoqStatus = (typeof BOQ_STATUSES)[number];
 
 export const STATUS_LABEL: Record<string, string> = {
+  REQUEST_RECEIVED: "Client request received",
   DRAFT: "Draft",
   ASSIGNED: "Site visit assigned",
   SITE_VISIT_DONE: "Site visit done",
@@ -20,6 +22,7 @@ export const STATUS_LABEL: Record<string, string> = {
 };
 
 export const STATUS_COLOR: Record<string, string> = {
+  REQUEST_RECEIVED: "bg-teal-100 text-teal-800",
   DRAFT: "bg-stone-200 text-stone-700",
   ASSIGNED: "bg-blue-100 text-blue-800",
   SITE_VISIT_DONE: "bg-amber-100 text-amber-800",

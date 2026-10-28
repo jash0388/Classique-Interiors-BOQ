@@ -5,6 +5,8 @@ import { toBoqView } from "@/lib/boq-view";
 import BoqList from "@/components/BoqList";
 import { BOQ_STATUSES, statusLabel } from "@/lib/status";
 import { btn } from "@/components/ui";
+import CopyButton from "@/components/CopyButton";
+import { headers } from "next/headers";
 
 export const metadata = { title: "BOQs" };
 
@@ -15,6 +17,10 @@ export default async function BoqsPage({
 }) {
   const user = await requireUser();
   const { status } = await searchParams;
+  const headerList = await headers();
+  const host = headerList.get("host") ?? "localhost:3000";
+  const protocol = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
+  const clientRequestUrl = `${protocol}://${host}/request`;
 
   const where = {
     deletedAt: null,
@@ -51,9 +57,12 @@ export default async function BoqsPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-bold text-stone-900">{isField ? "My site visits" : "BOQs"}</h1>
         {!isField ? (
+          <div className="flex flex-wrap gap-2">
+          <CopyButton text={clientRequestUrl} label="Copy client request link" />
           <Link href="/boqs/new" className={btn.primary}>
             + New BOQ
           </Link>
+          </div>
         ) : null}
       </div>
 

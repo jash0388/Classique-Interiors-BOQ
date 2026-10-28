@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import LoginForm from "./LoginForm";
+import Link from "next/link";
+import RequestTracker from "./RequestTracker";
 import { COMPANY } from "@/lib/company";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -18,7 +20,11 @@ export default function LoginPage() {
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
           <LoginForm />
         </div>
-        <p className="mt-6 text-center text-xs text-stone-400">
+        <RequestTracker />
+        <p className="mt-5 text-center text-xs text-stone-500">
+          Need an estimate? <Link className="font-medium text-teal-700 underline" href="/request">Submit a client BOQ request</Link>.
+        </p>
+        <p className="mt-3 text-center text-xs text-stone-400">
           Accounts are managed by the company. Contact the owner if you cannot sign in.
         </p>
       </div>

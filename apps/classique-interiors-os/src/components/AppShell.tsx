@@ -19,6 +19,7 @@ const ICONS = {
   users: (
     <Icon d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M15 3.13a4 4 0 0 1 0 7.75" />
   ),
+  vendors: <Icon d="M3 7h18l-2 13H5L3 7Zm4 0 2-4h6l2 4M9 11v5m6-5v5" />,
 };
 
 export default function AppShell({
@@ -33,6 +34,7 @@ export default function AppShell({
     { href: "/dashboard", label: "Dashboard", icon: ICONS.home },
     { href: "/boqs", label: "BOQs", icon: ICONS.file },
   ];
+  if (user.role === "OWNER" || user.role === "MANAGER") items.push({ href: "/vendors", label: "Vendors", icon: ICONS.vendors });
   if (user.role === "OWNER") {
     items.push({ href: "/boqs/trash", label: "Trash", icon: ICONS.file });
     items.push({ href: "/users", label: "Users", icon: ICONS.users });

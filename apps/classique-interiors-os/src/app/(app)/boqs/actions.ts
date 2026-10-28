@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import crypto from "node:crypto";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
@@ -107,7 +108,6 @@ export async function createBOQ(formData: FormData) {
   }
 
   const deadlineRaw = str(formData.get("deadline"));
-  const assignedToId = str(formData.get("assignedToId")) || null;
   const items = parseItems(formData.get("items"));
 
   const number = await nextBoqNumber();
@@ -123,11 +123,9 @@ export async function createBOQ(formData: FormData) {
       siteDetails: str(formData.get("siteDetails")) || null,
       deadline: deadlineRaw ? new Date(deadlineRaw) : null,
       notes: str(formData.get("notes")) || null,
-      status: assignedToId ? "ASSIGNED" : "DRAFT",
+      status: "DRAFT",
       visitToken: newToken(),
       createdById: user.uid,
-      assignedToId,
-      assignedAt: assignedToId ? new Date() : null,
       items: { create: items.map((it, i) => ({ srNo: i + 1, ...it })) },
     },
   });
@@ -143,16 +141,19 @@ export async function assignBOQ(formData: FormData) {
   const assignedToId = str(formData.get("assignedToId"));
   if (!boqId || !assignedToId) throw new Error("Pick a person to assign.");
 
-  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true, deletedAt: true } });
+  const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true, deletedAt: true, number: true, title: true, clientName: true } });
   if (!boq || boq.deletedAt) throw new Error("BOQ not found.");
+  const assignee = await db.user.findFirst({ where: { id: assignedToId, role: "FIELD", active: true }, select: { name: true, email: true } });
+  if (!assignee) throw new Error("Select an active site team member.");
+  const visitToken = newToken();
 
-  const resetStatuses = ["DRAFT", "ASSIGNED", "SITE_VISIT_DONE", "ON_HOLD"];
+  const resetStatuses = ["DRAFT", "REQUEST_RECEIVED", "ASSIGNED", "SITE_VISIT_DONE", "ON_HOLD"];
   await db.bOQ.update({
     where: { id: boqId },
     data: {
       assignedToId,
       assignedAt: new Date(),
-      visitToken: newToken(),
+      visitToken,
       status: resetStatuses.includes(boq.status) ? "ASSIGNED" : boq.status,
     },
   });
@@ -160,6 +161,32 @@ export async function assignBOQ(formData: FormData) {
   revalidatePath(`/boqs/${boqId}`);
   revalidatePath("/boqs");
   revalidatePath("/dashboard");
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!apiKey || !from || !assignee.email) {
+    return { emailSent: false, emailError: "Automatic email is not configured for this app yet. Use the Email button to send the assignment." };
+  }
+  try {
+    const h = await headers();
+    const appUrl = process.env.APP_URL || `${h.get("x-forwarded-proto") || "https"}://${h.get("host") || "localhost:3000"}`;
+    const actualVisitUrl = `${appUrl.replace(/\/$/, "")}/visit/${visitToken}`;
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: [assignee.email],
+        subject: `Site visit assigned: ${boq.number}`,
+        text: `Hi ${assignee.name},\n\nA site visit has been assigned to you.\nBOQ: ${boq.number}\nProject: ${boq.title}\nClient: ${boq.clientName}\n\nOpen the visit report and submit your details and photos here:\n${actualVisitUrl}\n`,
+      }),
+      cache: "no-store",
+    });
+    if (!response.ok) return { emailSent: false, emailError: "Assignment saved, but email delivery failed. Use the Email button to send the link manually." };
+    return { emailSent: true, emailError: "" };
+  } catch {
+    return { emailSent: false, emailError: "Assignment saved, but email delivery failed. Use the Email button to send the link manually." };
+  }
 }
 
 export async function setHold(formData: FormData) {
@@ -182,19 +209,24 @@ export async function setHold(formData: FormData) {
 export async function addVendorInquiry(formData: FormData) {
   await requireRole("OWNER", "MANAGER");
   const boqId = str(formData.get("boqId"));
-  const vendorName = str(formData.get("vendorName"));
-  if (!boqId || !vendorName) throw new Error("Vendor name is required.");
+  if (!boqId) throw new Error("BOQ not found.");
 
   const boq = await db.bOQ.findUnique({ where: { id: boqId }, select: { status: true, deletedAt: true } });
   if (!boq || boq.deletedAt) throw new Error("BOQ not found.");
+  const vendorId = str(formData.get("vendorId")) || null;
+  const savedVendor = vendorId ? await db.vendor.findFirst({ where: { id: vendorId, active: true } }) : null;
+  if (vendorId && !savedVendor) throw new Error("Saved vendor not found or archived.");
+  const vendorName = savedVendor?.name || str(formData.get("vendorName"));
+  if (!vendorName) throw new Error("Choose or enter a vendor name.");
 
   const dueDateRaw = str(formData.get("dueDate"));
   await db.vendorInquiry.create({
     data: {
       boqId,
+      vendorId,
       vendorName,
-      vendorPhone: str(formData.get("vendorPhone")) || null,
-      vendorEmail: str(formData.get("vendorEmail")) || null,
+      vendorPhone: savedVendor?.phone || str(formData.get("vendorPhone")) || null,
+      vendorEmail: savedVendor?.email || str(formData.get("vendorEmail")) || null,
       instructions: str(formData.get("instructions")) || DEFAULT_INSTRUCTIONS,
       dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
     },
@@ -226,6 +258,7 @@ export async function addVendorQuote(formData: FormData) {
   const boqId = str(formData.get("boqId"));
   const amount = num(formData.get("amount"));
   if (!inquiryId || amount <= 0) throw new Error("Enter a valid quotation amount.");
+  if (str(formData.get("reviewConfirmed")) !== "on") throw new Error("Review the quotation and confirm its amount, tax basis and exclusions before saving.");
 
   let fileUrl: string | null = null;
   let fileName: string | null = null;

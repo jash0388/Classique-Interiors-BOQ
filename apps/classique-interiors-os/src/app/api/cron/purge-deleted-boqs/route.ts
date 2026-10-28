@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   const cutoff = trashCutoff();
   const select = {
     id: true,
+    referenceFiles: { select: { id: true, url: true, purgedAt: true } },
     siteVisit: { select: { files: { select: { id: true, url: true, purgedAt: true } } } },
     vendorInquiries: {
       select: {
@@ -41,6 +42,11 @@ export async function GET(req: NextRequest) {
   for (const boq of expired) {
     try {
       await db.bOQ.update({ where: { id: boq.id }, data: { purgeAttemptedAt: new Date() } });
+      for (const file of boq.referenceFiles) {
+        if (file.purgedAt) continue;
+        await deleteStoredFile(file.url);
+        await db.clientReferenceFile.update({ where: { id: file.id }, data: { purgedAt: new Date() } });
+      }
       for (const file of boq.siteVisit?.files ?? []) {
         if (file.purgedAt) continue;
         await deleteStoredFile(file.url);
@@ -62,5 +68,18 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ processed: expired.length, purged, failed });
+  const orphanCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const orphaned = await db.clientReferenceFile.findMany({
+    where: { boqId: null, purgedAt: null, createdAt: { lte: orphanCutoff } },
+    orderBy: { createdAt: "asc" }, take: 20, select: { id: true, url: true },
+  });
+  for (const file of orphaned) {
+    try {
+      await deleteStoredFile(file.url);
+      await db.clientReferenceFile.update({ where: { id: file.id }, data: { purgedAt: new Date() } });
+      purged++;
+    } catch { failed++; }
+  }
+
+  return NextResponse.json({ processed: expired.length, orphaned: orphaned.length, purged, failed });
 }

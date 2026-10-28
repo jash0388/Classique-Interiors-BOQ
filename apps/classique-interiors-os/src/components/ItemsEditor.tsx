@@ -12,10 +12,12 @@ export type ItemRow = {
 
 const emptyRow: ItemRow = { description: "", unit: "nos", quantity: "", remarks: "" };
 
-export default function ItemsEditor({ name = "items" }: { name?: string }) {
+export default function ItemsEditor({ name = "items", allowImport = true }: { name?: string; allowImport?: boolean }) {
   const [rows, setRows] = useState<ItemRow[]>([{ ...emptyRow }]);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
+  const [importNotice, setImportNotice] = useState("");
+  const [dragging, setDragging] = useState(false);
   const fileKey = useRef(0);
 
   function update(i: number, patch: Partial<ItemRow>) {
@@ -31,6 +33,18 @@ export default function ItemsEditor({ name = "items" }: { name?: string }) {
       const res = await fetch("/api/boqs/import", { method: "POST", body: fd });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Import failed");
+      setImportNotice(`Imported ${json.rows?.length ?? 0} item rows${json.sheet ? ` from “${json.sheet}”` : ""}. Recognized blank project fields were filled; please review all values.`);
+      for (const [name, raw] of Object.entries(json.metadata ?? {})) {
+        const value = String(raw ?? "").trim();
+        const input = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${name}"]`);
+        if (!input || input.value.trim() || !value) continue;
+        const normalized = input.type === "date" ? (() => { const d = new Date(value); return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10); })() : value;
+        if (!normalized) continue;
+        const setter = input instanceof HTMLInputElement ? Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set : Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+        setter?.call(input, normalized);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
       const parsed: ItemRow[] = (json.rows || []).map((r: ItemRow) => ({
         description: r.description,
         unit: r.unit || "nos",
@@ -54,17 +68,22 @@ export default function ItemsEditor({ name = "items" }: { name?: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div
+        className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed px-3 py-2 ${dragging ? "border-teal-600 bg-teal-50" : "border-stone-300"}`}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files?.[0]; if (f) importFile(f); }}
+      >
         <p className="text-sm font-medium text-stone-700">
-          Items <span className="text-stone-400">({rows.filter((r) => r.description.trim()).length})</span>
+          {dragging ? "Drop BOQ spreadsheet here" : <>BOQ items <span className="text-stone-400">({rows.filter((r) => r.description.trim()).length}) · Drop an Excel/CSV file to fill these rows</span></>}
         </p>
         <div className="flex items-center gap-2">
           {importing ? <span className="text-xs text-stone-500">Reading file…</span> : null}
-          <label
+          {allowImport ? <label
             key={fileKey.current}
             className="cursor-pointer rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
           >
-            ⬆ Import Excel / CSV
+            ⬆ Choose Excel / CSV
             <input
               type="file"
               accept=".xlsx,.xls,.csv"
@@ -74,10 +93,11 @@ export default function ItemsEditor({ name = "items" }: { name?: string }) {
                 if (f) importFile(f);
               }}
             />
-          </label>
+          </label> : null}
         </div>
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {importNotice ? <p className="text-sm text-teal-800">{importNotice}</p> : null}
 
       <div className="overflow-x-auto rounded-lg border border-stone-200">
         <table className="w-full min-w-[640px] text-sm">

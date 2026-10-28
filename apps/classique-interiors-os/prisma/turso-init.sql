@@ -29,9 +29,24 @@ CREATE TABLE "BOQ" (
     "assignedToId" TEXT,
     "assignedAt" DATETIME,
     "visitToken" TEXT NOT NULL,
+    "publicTrackingTokenHash" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "BOQ_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "BOQ_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "ClientReferenceFile" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "boqId" TEXT,
+    "uploadSessionId" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "filename" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "mimeType" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "purgedAt" DATETIME,
+    CONSTRAINT "ClientReferenceFile_boqId_fkey" FOREIGN KEY ("boqId") REFERENCES "BOQ" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -70,6 +85,22 @@ CREATE TABLE "SiteVisitFile" (
 );
 
 -- CreateTable
+CREATE TABLE "Vendor" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "trade" TEXT NOT NULL,
+    "phone" TEXT,
+    "email" TEXT,
+    "city" TEXT,
+    "notes" TEXT,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdById" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Vendor_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "VendorInquiry" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "boqId" TEXT NOT NULL,
@@ -80,7 +111,9 @@ CREATE TABLE "VendorInquiry" (
     "dueDate" DATETIME,
     "status" TEXT NOT NULL DEFAULT 'SENT',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "VendorInquiry_boqId_fkey" FOREIGN KEY ("boqId") REFERENCES "BOQ" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "vendorId" TEXT,
+    CONSTRAINT "VendorInquiry_boqId_fkey" FOREIGN KEY ("boqId") REFERENCES "BOQ" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "VendorInquiry_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "Vendor" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -126,6 +159,10 @@ CREATE UNIQUE INDEX "BOQ_number_key" ON "BOQ"("number");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "BOQ_visitToken_key" ON "BOQ"("visitToken");
+CREATE INDEX "Vendor_active_trade_idx" ON "Vendor"("active", "trade");
+CREATE UNIQUE INDEX "BOQ_publicTrackingTokenHash_key" ON "BOQ"("publicTrackingTokenHash");
+CREATE UNIQUE INDEX "ClientReferenceFile_url_key" ON "ClientReferenceFile"("url");
+CREATE INDEX "ClientReferenceFile_uploadSessionId_boqId_idx" ON "ClientReferenceFile"("uploadSessionId", "boqId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SiteVisit_boqId_key" ON "SiteVisit"("boqId");
