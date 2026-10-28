@@ -14,5 +14,5 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   if (!session) return { error: "Wrong email or password, or the account is inactive." };
 
   await setSessionCookie(session);
-  redirect("/");
+  redirect("/dashboard");
 }

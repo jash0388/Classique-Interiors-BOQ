@@ -5,7 +5,7 @@ const PUBLIC_PREFIXES = ["/login", "/request", "/visit", "/api/auth", "/api/uplo
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isPublic = PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const isPublic = pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   const session = await verifySession(req.cookies.get(COOKIE_NAME)?.value);
 
@@ -21,7 +21,7 @@ export async function middleware(req: NextRequest) {
 
   if (session && (pathname === "/login" || pathname.startsWith("/login/"))) {
     const url = req.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
   }
